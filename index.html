@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#1B3A1B">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="BGT Dispatch">
+    <title>Big Gus Tractor — Dispatch</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Source+Sans+3:wght@400;500;600&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root{
+            --g1:#ffffff;--g2:#f5f5f5;--g3:#eeeeee;--g4:#e0e0e0;--g5:#d5d5d5;
+            --gold:#c9a84c;--gold2:#e2c06a;--gd:rgba(201,168,76,.14);--gg:rgba(201,168,76,.3);
+            --red:#d94f4f;--rd:rgba(217,79,79,.13);
+            --blue:#4a7fc9;--bd:rgba(74,127,201,.13);
+            --teal:#2ea87a;--td:rgba(46,168,122,.13);
+            --amber:#d9914a;--ad:rgba(217,145,74,.13);
+            --bdr:#cccccc;--bdr2:#bbbbbb;
+            --tx:#111111;--tx2:#444444;--tx3:#777777;
+            --safe-top:env(safe-area-inset-top,0px);
+            --safe-bot:env(safe-area-inset-bottom,0px);
+        }
+        *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+        html,body{height:100%;background:#ffffff;color:#111111;font-family:'Source Sans 3',sans-serif;overflow:hidden;-webkit-font-smoothing:antialiased;}
+
+        .screen{position:fixed;inset:0;display:flex;flex-direction:column;z-index:10;}
+        
+        #topbar{background:#ffffff;border-bottom:2px solid var(--gold);padding:calc(var(--safe-top) + 10px) 14px 10px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;position:relative;}
+        .tb-logo{display:flex;align-items:center;gap:9px;}
+        .tb-icon{width:36px;height:36px;background:var(--gold);border-radius:7px;display:flex;align-items:center;justify-content:center;font-family:'Oswald',sans-serif;font-weight:700;font-size:14px;color:var(--g1);flex-shrink:0;}
+        .tb-name{font-family:'Oswald',sans-serif;font-size:16px;font-weight:600;color:var(--tx);line-height:1;letter-spacing:.3px;}
+        
+        #clock{font-family:'Roboto Mono',monospace;font-size:12px;color:var(--gold);text-align:right;}
+        #dateline{font-size:10px;color:var(--tx3);text-align:right;margin-top:1px;}
+
+        #content{flex:1;overflow-y:auto;padding-bottom:10px;}
+        .page{display:none;}
+        .page.active{display:block;}
+
+        #nav{background:#f5f5f5;border-top:1px solid var(--bdr);display:flex;flex-shrink:0;padding-bottom:var(--safe-bot);}
+        .nav-btn{flex:1;background:none;border:none;color:var(--tx3);padding:15px 0;cursor:pointer;display:flex;flex-direction:column;align-items:center;font-family:'Oswald',sans-serif;font-size:12px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;}
+        .nav-btn.active{color:var(--gold);border-top:2px solid var(--gold);}
+
+        .stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:13px;}
+        .sc{background:var(--g2);border:1px solid var(--bdr);border-radius:9px;padding:13px;position:relative;}
+        .sn{font-family:'Oswald',sans-serif;font-size:38px;font-weight:700;line-height:1;}
+        .sc.gold .sn{color:var(--gold);}
+        .sc.blue .sn{color:var(--blue);}
+        .sl{font-size:10px;color:var(--tx3);margin-top:3px;font-weight:600;text-transform:uppercase;}
+
+        .shdr{padding:13px 13px 5px;font-family:'Oswald',sans-serif;font-size:11px;font-weight:600;letter-spacing:2.5px;text-transform:uppercase;color:var(--tx3);}
+        
+        .card-list{padding:4px 13px;display:flex;flex-direction:column;gap:8px;}
+        .card{background:#ffffff;border:1px solid var(--bdr);border-radius:9px;padding:13px;cursor:pointer;border-left:4px solid transparent;}
+        .card.pending{border-left-color:var(--gold);background:#FFFBF0;}
+        .card.enroute{border-left-color:var(--amber);background:#FFF3E0;}
+        .card-title{font-family:'Oswald',sans-serif;font-size:17px;font-weight:600;color:var(--tx);}
+        .card-id{font-family:'Roboto Mono',monospace;font-size:10px;color:var(--tx3);}
+        .card-foot{font-size:11px;color:var(--tx3);margin-top:7px;border-top:1px solid var(--bdr);padding-top:7px;}
+
+        .ov{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:200;display:none;align-items:flex-end;backdrop-filter:blur(4px);}
+        .ov.open{display:flex;}
+        .sheet{background:#ffffff;border-radius:16px 16px 0 0;border-top:2px solid var(--gold);width:100%;padding:20px;padding-bottom:calc(20px + var(--safe-bot));animation:slideUp 0.3s ease-out;}
+        @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+        .shtitle{font-family:'Oswald',sans-serif;font-size:22px;font-weight:600;margin-bottom:15px;}
+        .dsec{display:flex;flex-direction:column;gap:10px;}
+        .dkv{display:flex;justify-content:space-between;border-bottom:1px solid var(--g3);padding-bottom:5px;}
+        .dk{font-size:12px;color:var(--tx3);text-transform:uppercase;}
+        .dv{font-weight:600;}
+        .btn-full{width:100%;background:var(--gold);color:white;border:none;padding:15px;border-radius:8px;font-family:'Oswald',sans-serif;font-weight:600;margin-top:20px;cursor:pointer;}
+    </style>
+</head>
+<body>
+
+<div id="scr-app" class="screen">
+    <div id="topbar">
+        <div class="tb-logo">
+            <div class="tb-icon">BGT</div>
+            <div>
+                <div class="tb-name">Big Gus Tractor</div>
+                <div class="tb-addr">Dispatch Center</div>
+            </div>
+        </div>
+        <div class="tb-right">
+            <div id="clock">--:--:--</div>
+            <div id="dateline">MAY 10, 2026</div>
+        </div>
+    </div>
+
+    <div id="content">
+        <div id="page-dash" class="page active">
+            <div class="stats">
+                <div class="sc gold"><div class="sn">3</div><div class="sl">Pending</div></div>
+                <div class="sc blue"><div class="sn">5</div><div class="sl">En Route</div></div>
+            </div>
+            <div class="shdr">Active Dispatches</div>
+            <div class="card-list" id="dispatch-list"></div>
+        </div>
+
+        <div id="page-fleet" class="page">
+            <div class="shdr">Fleet Status</div>
+            <div class="card-list">
+                <div class="card">
+                    <div class="card-title">2024 RAM 3500 (Dually)</div>
+                    <div class="card-foot">Status: In Service • Mileage: 65,000/yr</div>
+                </div>
+                <div class="card">
+                    <div class="card-title">2025 Ford Explorer ST</div>
+                    <div class="card-foot">Status: Support Unit</div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="page-reports" class="page">
+            <div class="shdr">Operations Summary</div>
+            <div class="stats">
+                <div class="sc gold"><div class="sn">100%</div><div class="sl">Reliability</div></div>
+                <div class="sc blue"><div class="sn">3rd</div><div class="sl">Gen Legacy</div></div>
+            </div>
+        </div>
+    </div>
+
+    <nav id="nav">
+        <button class="nav-btn active" onclick="showPage('dash', this)">Dash</button>
+        <button class="nav-btn" onclick="showPage('fleet', this)">Fleet</button>
+        <button class="nav-btn" onclick="showPage('reports', this)">Reports</button>
+    </nav>
+</div>
+
+<div id="overlay" class="ov" onclick="closeSheet()">
+    <div class="sheet" onclick="event.stopPropagation()">
+        <div class="shtitle">Job Details</div>
+        <div id="sheet-content" class="dsec"></div>
+        <button class="btn-full" onclick="closeSheet()">Close Details</button>
+    </div>
+</div>
+
+<script>
+    const dispatches = [
+        { id: 'JOB-1973-A', client: 'Farm Equipment Delivery', status: 'enroute', driver: 'Tracy', equip: 'Tilt Deck Trailer' },
+        { id: 'JOB-1973-B', client: 'Heavy Machinery Haul', status: 'pending', driver: 'Gus', equip: '24 RAM 3500' },
+        { id: 'JOB-1973-C', client: 'Tractor Transport', status: 'enroute', driver: 'Tracy', equip: '19.5" Wheel Set' }
+    ];
+
+    function renderDispatches() {
+        const list = document.getElementById('dispatch-list');
+        list.innerHTML = dispatches.map(job => `
+            <div class="card ${job.status}" onclick="openSheet('${job.id}')">
+                <div class="card-id">${job.id}</div>
+                <div class="card-title">${job.client}</div>
+                <div class="card-foot">Equip: ${job.equip} • Driver: ${job.driver}</div>
+            </div>
+        `).join('');
+    }
+
+    function showPage(pageId, btn) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById('page-' + pageId).classList.add('active');
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+    }
+
+    function openSheet(id) {
+        const job = dispatches.find(j => j.id === id);
+        document.getElementById('sheet-content').innerHTML = `
+            <div class="dkv"><span class="dk">Job ID</span><span class="dv">${job.id}</span></div>
+            <div class="dkv"><span class="dk">Client</span><span class="dv">${job.client}</span></div>
+            <div class="dkv"><span class="dk">Driver</span><span class="dv">${job.driver}</span></div>
+            <div class="dkv"><span class="dk">Equipment</span><span class="dv">${job.equip}</span></div>
+            <div class="dkv"><span class="dk">Status</span><span class="dv">${job.status.toUpperCase()}</span></div>
+        `;
+        document.getElementById('overlay').classList.add('open');
+    }
+
+    function closeSheet() {
+        document.getElementById('overlay').classList.remove('open');
+    }
+
+    function updateClock() {
+        const now = new Date();
+        document.getElementById('clock').innerText = now.toLocaleTimeString();
+        document.getElementById('dateline').innerText = now.toLocaleDateString(undefined, {month:'short', day:'numeric', year:'numeric'}).toUpperCase();
+    }
+
+    setInterval(updateClock, 1000);
+    updateClock();
+    renderDispatches();
+</script>
+
+</body>
+</html>
