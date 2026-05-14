@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Big Gus Logistics & Fab Manager</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #e67e22;
+            --bg: #f4f7f6;
+            --text: #333;
+        }
+
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; display: flex; }
+
+        /* Sidebar & Layout */
+        #sidebar { width: 250px; background: var(--primary); color: white; height: 100vh; padding: 20px; position: fixed; }
+        #main-content { margin-left: 290px; padding: 20px; width: calc(100% - 330px); }
+
+        /* Components */
+        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        
+        /* Search & Filter Bar */
+        .controls { display: flex; gap: 10px; margin-bottom: 20px; }
+        input, select { padding: 10px; border: 1px solid #ddd; border-radius: 4px; }
+        #searchBar { flex-grow: 2; }
+
+        /* Notification Toast */
+        #notification-box { position: fixed; top: 20px; right: 20px; z-index: 1000; }
+        .toast { background: var(--secondary); color: white; padding: 15px; border-radius: 5px; margin-bottom: 10px; animation: slideIn 0.5s ease; }
+
+        /* Table Design */
+        table { width: 100%; border-collapse: collapse; background: white; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background: #f8f9fa; }
+
+        @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+    </style>
+</head>
+<body>
+
+<div id="sidebar">
+    <h2>BGT Manager</h2>
+    <hr>
+    <p><strong>Status:</strong> <span id="conn-status">📡 Online</span></p>
+    <nav>
+        <p>📋 Hauling Logs</p>
+        <p>🛠 Fabrication</p>
+        <p>🚛 Fleet Maintenance</p>
+        <p>📖 User Guide</p>
+    </nav>
+</div>
+
+<div id="main-content">
+    <div id="notification-box"></div>
+
+    <div class="card">
+        <h3>Search & Filter Fleet Operations</h3>
+        <div class="controls">
+            <input type="text" id="searchBar" placeholder="Search by VIN, Load, or Client..." onkeyup="filterData()">
+            <select id="typeFilter" onchange="filterData()">
+                <option value="all">All Types</option>
+                <option value="Haul">Commercial Haul</option>
+                <option value="Fab">Fabrication</option>
+                <option value="Maint">Maintenance</option>
+            </select>
+            <select id="priorityFilter" onchange="filterData()">
+                <option value="all">All Priorities</option>
+                <option value="High">High Priority</option>
+                <option value="Normal">Normal</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="card">
+        <table id="dataTable">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Type</th>
+                    <th>Description</th>
+                    <th>Priority</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                <!-- Data will be injected here -->
+            </tbody>
+        </table>
+    </div>
+
+    <div class="card" id="user-guide">
+        <h3>📖 Quick User Guide</h3>
+        <ul>
+            <li><strong>Search:</strong> Use the global bar to find VINs or specific materials like "angle iron."</li>
+            <li><strong>Offline Mode:</strong> Data saves locally and syncs automatically when 📡 icon turns green.</li>
+            <li><strong>Notifications:</strong> Orange alerts appear for urgent vehicle maintenance.</li>
+        </ul>
+    </div>
+</div>
+
+<script>
+    // Sample Data based on your current projects
+    const logs = [
+        { date: '2026-05-12', type: 'Haul', desc: 'Mahindra Tractor to Fountain, FL', priority: 'High' },
+        { date: '2026-05-13', type: 'Fab', desc: 'RAM 3500 Mirror Retrofit (Wiring)', priority: 'Normal' },
+        { date: '2026-05-14', type: 'Maint', desc: 'Oil Change - Ford Explorer ST', priority: 'High' },
+        { date: '2026-06-02', type: 'Haul', desc: 'Daughter Reporting to Ft. Sill', priority: 'High' }
+    ];
+
+    function renderTable(data) {
+        const body = document.getElementById('tableBody');
+        body.innerHTML = data.map(item => `
+            <tr>
+                <td>${item.date}</td>
+                <td>${item.type}</td>
+                <td>${item.desc}</td>
+                <td><strong>${item.priority}</strong></td>
+            </tr>
+        `).join('');
+    }
+
+    function filterData() {
+        const searchTerm = document.getElementById('searchBar').value.toLowerCase();
+        const typeTerm = document.getElementById('typeFilter').value;
+        const priorityTerm = document.getElementById('priorityFilter').value;
+
+        const filtered = logs.filter(item => {
+            const matchesSearch = item.desc.toLowerCase().includes(searchTerm);
+            const matchesType = typeTerm === 'all' || item.type === typeTerm;
+            const matchesPriority = priorityTerm === 'all' || item.priority === priorityTerm;
+            return matchesSearch && matchesType && matchesPriority;
+        });
+
+        renderTable(filtered);
+    }
+
+    // Real-Time Notification Simulator
+    function showNotification(msg) {
+        const box = document.getElementById('notification-box');
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.innerText = `🔔 ALERT: ${msg}`;
+        box.appendChild(toast);
+        setTimeout(() => toast.remove(), 5000);
+    }
+
+    // Initialize
+    window.onload = () => {
+        renderTable(logs);
+        setTimeout(() => showNotification("Maintenance Due: RAM 3500 Filter Check"), 3000);
+    };
+</script>
+
+</body>
+</html>
