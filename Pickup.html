@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Schedule a Pickup — Big Gus Tractor & Equipment</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Source+Sans+3:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --dark:#1B3A1B;
+  --gold:#C9A84C;
+  --gold-light:#F0D98A;
+  --green:#2EA87A;
+  --red:#C62828;
+  --bg:#F7F6F2;
+  --white:#FFFFFF;
+  --border:#D8D4C8;
+  --text:#1A1A1A;
+  --muted:#6B6560;
+  --card:#FFFFFF;
+}
+html{scroll-behavior:smooth;}
+body{
+  font-family:'Source Sans 3',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+}
+
+/* ── HEADER ── */
+.site-header{
+  background:var(--dark);
+  padding:18px 24px;
+  display:flex;
+  align-items:center;
+  gap:14px;
+  border-bottom:3px solid var(--gold);
+}
+.logo-badge{
+  width:48px;height:48px;
+  background:var(--gold);
+  border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Oswald',sans-serif;
+  font-size:18px;font-weight:700;
+  color:var(--dark);
+  flex-shrink:0;
+}
+.logo-text h1{
+  font-family:'Oswald',sans-serif;
+  font-size:18px;font-weight:600;
+  color:var(--white);
+  letter-spacing:.5px;
+  line-height:1.1;
+}
+.logo-text p{
+  font-size:11px;
+  color:rgba(255,255,255,.5);
+  margin-top:1px;
+}
+.header-contact{
+  margin-left:auto;
+  text-align:right;
+  font-size:12px;
+  color:rgba(255,255,255,.6);
+  line-height:1.6;
+}
+.header-contact a{
+  color:var(--gold);
+  text-decoration:none;
+  font-weight:600;
+  font-size:14px;
+}
+
+/* ── HERO BANNER ── */
+.hero{
+  background:linear-gradient(135deg, var(--dark) 0%, #2d5a2d 100%);
+  padding:36px 24px 32px;
+  text-align:center;
+  position:relative;
+  overflow:hidden;
+}
+.hero::before{
+  content:'';
+  position:absolute;inset:0;
+  background:repeating-linear-gradient(45deg,transparent,transparent 40px,rgba(201,168,76,.04) 40px,rgba(201,168,76,.04) 80px);
+}
+.hero-content{position:relative;z-index:1;}
+.hero h2{
+  font-family:'Oswald',sans-serif;
+  font-size:28px;font-weight:700;
+  color:var(--white);
+  letter-spacing:1px;
+  text-transform:uppercase;
+  margin-bottom:8px;
+}
+.hero h2 span{color:var(--gold);}
+.hero p{
+  font-size:15px;color:rgba(255,255,255,.7);
+  max-width:500px;margin:0 auto;
+  line-height:1.5;
+}
+.hero-steps{
+  display:flex;gap:0;margin:24px auto 0;
+  max-width:480px;
+  background:rgba(0,0,0,.25);
+  border-radius:10px;overflow:hidden;
+}
+.hero-step{
+  flex:1;padding:12px 8px;text-align:center;
+  border-right:1px solid rgba(255,255,255,.1);
+}
+.hero-step:last-child{border-right:none;}
+.hero-step .num{
+  display:block;
+  font-family:'Oswald',sans-serif;
+  font-size:20px;font-weight:700;
+  color:var(--gold);
+  line-height:1;
+}
+.hero-step .lbl{
+  display:block;
+  font-size:10px;color:rgba(255,255,255,.6);
+  margin-top:3px;
+  text-transform:uppercase;
+  letter-spacing:.5px;
+}
+
+/* ── MAIN FORM CONTAINER ── */
+.container{
+  max-width:600px;
+  margin:0 auto;
+  padding:24px 16px 60px;
+}
+
+/* ── SECTION CARDS ── */
+.form-card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:12px;
+  overflow:hidden;
+  margin-bottom:16px;
+  box-shadow:0 1px 4px rgba(0,0,0,.06);
+}
+.form-card-header{
+  background:var(--dark);
+  padding:12px 18px;
+  display:flex;align-items:center;gap:10px;
+}
+.card-icon{
+  width:28px;height:28px;
+  background:rgba(201,168,76,.2);
+  border-radius:6px;
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;
+}
+.card-icon svg{stroke:var(--gold);fill:none;}
+.form-card-header h3{
+  font-family:'Oswald',sans-serif;
+  font-size:14px;font-weight:600;
+  color:var(--white);
+  letter-spacing:.5px;
+  text-transform:uppercase;
+}
+.form-card-body{padding:18px;}
+
+/* ── FORM FIELDS ── */
+.fg{margin-bottom:14px;}
+.fg:last-child{margin-bottom:0;}
+.fl{
+  display:block;
+  font-size:11px;font-weight:600;
+  color:var(--muted);
+  text-transform:uppercase;
+  letter-spacing:.6px;
+  margin-bottom:5px;
+}
+.req{color:var(--red);}
+.fi,.fs,.fta{
+  width:100%;
+  background:#FAFAF8;
+  border:1.5px solid var(--border);
+  border-radius:8px;
+  padding:11px 13px;
+  font-family:'Source Sans 3',sans-serif;
+  font-size:15px;
+  color:var(--text);
+  transition:border-color .15s,box-shadow .15s;
+  outline:none;
+  -webkit-appearance:none;
+  appearance:none;
+}
+.fi:focus,.fs:focus,.fta:focus{
+  border-color:var(--gold);
+  box-shadow:0 0 0 3px rgba(201,168,76,.12);
+  background:var(--white);
+}
+.fi.error,.fs.error,.fta.error{
+  border-color:var(--red);
+  box-shadow:0 0 0 3px rgba(198,40,40,.1);
+}
+.fta{resize:vertical;min-height:80px;}
+.fs{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236B6560' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:36px;cursor:pointer;}
+.f2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+
+/* ── RADIO BUTTON GROUPS ── */
+.radio-group{display:flex;gap:8px;flex-wrap:wrap;}
+.radio-opt{
+  flex:1;min-width:80px;
+  background:#FAFAF8;
+  border:1.5px solid var(--border);
+  border-radius:8px;
+  padding:10px 8px;
+  text-align:center;
+  cursor:pointer;
+  transition:all .15s;
+  user-select:none;
+}
+.radio-opt:hover{border-color:var(--gold);background:#FFFBF0;}
+.radio-opt.selected{
+  border-color:var(--gold);
+  background:#FFFBF0;
+  box-shadow:0 0 0 2px rgba(201,168,76,.2);
+}
+.radio-opt .ro-icon{font-size:18px;display:block;margin-bottom:3px;}
+.radio-opt .ro-lbl{font-size:12px;font-weight:600;color:var(--text);}
+.radio-opt.selected .ro-lbl{color:var(--dark);}
+
+/* ── YES/NO TOGGLE ── */
+.yn-group{display:flex;gap:8px;}
+.yn-btn{
+  flex:1;
+  background:#FAFAF8;
+  border:1.5px solid var(--border);
+  border-radius:8px;
+  padding:11px;
+  text-align:center;
+  cursor:pointer;
+  font-size:14px;font-weight:600;
+  transition:all .15s;
+  user-select:none;
+}
+.yn-btn.yes.selected{background:#F0FBF6;border-color:var(--green);color:var(--green);}
+.yn-btn.no.selected{background:#FFF0F0;border-color:var(--red);color:var(--red);}
+.yn-btn:not(.selected){color:var(--muted);}
+
+/* ── SUBMIT BUTTON ── */
+.submit-btn{
+  width:100%;
+  background:var(--gold);
+  color:var(--dark);
+  border:none;
+  border-radius:10px;
+  padding:16px;
+  font-family:'Oswald',sans-serif;
+  font-size:17px;font-weight:700;
+  letter-spacing:1px;
+  text-transform:uppercase;
+  cursor:pointer;
+  transition:all .15s;
+  margin-top:8px;
+  box-shadow:0 2px 8px rgba(201,168,76,.3);
+}
+.submit-btn:hover{background:#d4963a;box-shadow:0 4px 12px rgba(201,168,76,.4);}
+.submit-btn:active{transform:scale(.98);}
+.submit-btn:disabled{background:#ccc;color:#888;cursor:not-allowed;box-shadow:none;}
+
+/* ── NOTE BOX ── */
+.note-box{
+  background:#FFFBF0;
+  border:1px solid rgba(201,168,76,.3);
+  border-left:3px solid var(--gold);
+  border-radius:0 8px 8px 0;
+  padding:10px 14px;
+  font-size:12px;
+  color:var(--muted);
+  line-height:1.5;
+  margin-bottom:14px;
+}
+
+/* ── SUCCESS SCREEN ── */
+.success-screen{
+  display:none;
+  text-align:center;
+  padding:40px 20px;
+}
+.success-icon{
+  width:70px;height:70px;
+  background:var(--green);
+  border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  margin:0 auto 20px;
+}
+.success-icon svg{stroke:#fff;fill:none;}
+.success-screen h2{
+  font-family:'Oswald',sans-serif;
+  font-size:26px;font-weight:700;
+  color:var(--dark);
+  margin-bottom:10px;
+}
+.success-screen p{
+  font-size:14px;color:var(--muted);
+  line-height:1.6;
+  max-width:380px;margin:0 auto 6px;
+}
+.ref-box{
+  background:var(--dark);
+  border-radius:10px;
+  padding:16px 20px;
+  margin:20px auto;
+  max-width:300px;
+}
+.ref-box .ref-lbl{font-size:11px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:1px;}
+.ref-box .ref-num{font-family:'Oswald',sans-serif;font-size:28px;font-weight:700;color:var(--gold);}
+
+/* ── ERROR MESSAGE ── */
+.err-banner{
+  background:#FFF0F0;
+  border:1px solid rgba(198,40,40,.3);
+  border-radius:8px;
+  padding:10px 14px;
+  font-size:13px;
+  color:var(--red);
+  margin-bottom:14px;
+  display:none;
+}
+
+/* ── FOOTER ── */
+.form-footer{
+  text-align:center;
+  padding:16px;
+  font-size:12px;
+  color:var(--muted);
+  border-top:1px solid var(--border);
+  margin-top:8px;
+}
+.form-footer a{color:var(--gold);text-decoration:none;font-weight:600;}
+
+@media(max-width:480px){
+  .f2{grid-template-columns:1fr;}
+  .hero-steps{display:none;}
+  .hero h2{font-size:22px;}
+  .header-contact{display:none;}
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="site-header">
+  <div class="logo-badge">BGT</div>
+  <div class="logo-text">
+    <h1>Big Gus Tractor & Equipment</h1>
+    <p>1490 W Hwy 98 · Mary Esther, FL 32569</p>
+  </div>
+  <div class="header-contact">
+    <a href="tel:8509377009">850-937-7009</a><br>
+    <span>biggustractor.com</span>
+  </div>
+</header>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-content">
+    <h2>Schedule a <span>Pickup</span></h2>
+    <p>Fill out the form below and our team will contact you to confirm your pickup appointment.</p>
+    <div class="hero-steps">
+      <div class="hero-step"><span class="num">1</span><span class="lbl">Your Info</span></div>
+      <div class="hero-step"><span class="num">2</span><span class="lbl">Equipment</span></div>
+      <div class="hero-step"><span class="num">3</span><span class="lbl">Schedule</span></div>
+      <div class="hero-step"><span class="num">4</span><span class="lbl">Confirm</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN FORM -->
+<div class="container">
+
+  <div id="form-view">
+
+    <div class="err-banner" id="err-banner">Please fill in all required fields highlighted above.</div>
+
+    <!-- SECTION 1: YOUR INFO -->
+    <div class="form-card">
+      <div class="form-card-header">
+        <div class="card-icon"><svg width="14" height="14" viewBox="0 0 24 24" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+        <h3>Your Information</h3>
+      </div>
+      <div class="form-card-body">
+        <div class="f2">
+          <div class="fg">
+            <label class="fl">First Name <span class="req">*</span></label>
+            <input class="fi" id="fname" type="text" placeholder="First name" autocomplete="given-name">
+          </div>
+          <div class="fg">
+            <label class="fl">Last Name <span class="req">*</span></label>
+            <input class="fi" id="lname" type="text" placeholder="Last name" autocomplete="family-name">
+          </div>
+        </div>
+        <div class="f2">
+          <div class="fg">
+            <label class="fl">Phone Number <span class="req">*</span></label>
+            <input class="fi" id="phone" type="tel" placeholder="(850) 555-0000" autocomplete="tel">
+          </div>
+          <div class="fg">
+            <label class="fl">Email Address</label>
+            <input class="fi" id="email" type="email" placeholder="you@email.com" autocomplete="email">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 2: PICKUP ADDRESS -->
+    <div class="form-card">
+      <div class="form-card-header">
+        <div class="card-icon"><svg width="14" height="14" viewBox="0 0 24 24" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
+        <h3>Pickup Address</h3>
+      </div>
+      <div class="form-card-body">
+        <div class="note-box">This is where we will pick up your equipment. Enter the full address where the equipment is located.</div>
+        <div class="fg">
+          <label class="fl">Street Address <span class="req">*</span></label>
+          <input class="fi" id="street" type="text" placeholder="123 Main Street" autocomplete="street-address">
+        </div>
+        <div class="f2">
+          <div class="fg">
+            <label class="fl">City <span class="req">*</span></label>
+            <input class="fi" id="city" type="text" placeholder="City" autocomplete="address-level2">
+          </div>
+          <div class="fg">
+            <label class="fl">State <span class="req">*</span></label>
+            <input class="fi" id="state" type="text" placeholder="FL" maxlength="2" oninput="this.value=this.value.toUpperCase()" autocomplete="address-level1">
+          </div>
+        </div>
+        <div class="fg">
+          <label class="fl">Zip Code <span class="req">*</span></label>
+          <input class="fi" id="zip" type="text" placeholder="32569" maxlength="10" inputmode="numeric">
+        </div>
+        <div class="fg">
+          <label class="fl">Gate Code / Access Instructions</label>
+          <input class="fi" id="gate" type="text" placeholder="Gate code, key box, call ahead, etc.">
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 3: EQUIPMENT INFO -->
+    <div class="form-card">
+      <div class="form-card-header">
+        <div class="card-icon"><svg width="14" height="14" viewBox="0 0 24 24" stroke-width="2"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></div>
+        <h3>Equipment Information</h3>
+      </div>
+      <div class="form-card-body">
+        <div class="fg">
+          <label class="fl">Equipment Type <span class="req">*</span></label>
+          <select class="fs" id="equip-type">
+            <option value="">— Select type —</option>
+            <option>Zero-Turn Mower</option>
+            <option>Riding Mower</option>
+            <option>Push Mower</option>
+            <option>Compact Tractor</option>
+            <option>Utility Tractor</option>
+            <option>Utility Vehicle (UTV)</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="f2">
+          <div class="fg">
+            <label class="fl">Brand / Manufacturer</label>
+            <input class="fi" id="brand" type="text" placeholder="e.g. John Deere, Kubota">
+          </div>
+          <div class="fg">
+            <label class="fl">Model</label>
+            <input class="fi" id="model" type="text" placeholder="e.g. Z530M, L3301">
+          </div>
+        </div>
+        <div class="fg">
+          <label class="fl">Serial Number</label>
+          <input class="fi" id="serial" type="text" placeholder="Serial number if known">
+        </div>
+        <div class="fg">
+          <label class="fl">Does it Run & Move? <span class="req">*</span></label>
+          <div class="radio-group" id="runs-group">
+            <div class="radio-opt" onclick="selectRuns(this,'yes')"><span class="ro-icon">✅</span><span class="ro-lbl">Yes</span></div>
+            <div class="radio-opt" onclick="selectRuns(this,'partial')"><span class="ro-icon">⚠️</span><span class="ro-lbl">Partially</span></div>
+            <div class="radio-opt" onclick="selectRuns(this,'no')"><span class="ro-icon">❌</span><span class="ro-lbl">Does Not Run</span></div>
+          </div>
+          <input type="hidden" id="runs" value="">
+        </div>
+        <div class="fg">
+          <label class="fl">Describe the Issue / Reason for Service <span class="req">*</span></label>
+          <textarea class="fta" id="issue" placeholder="Describe what is wrong or what service you need..."></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 4: PREFERRED SCHEDULE -->
+    <div class="form-card">
+      <div class="form-card-header">
+        <div class="card-icon"><svg width="14" height="14" viewBox="0 0 24 24" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div>
+        <h3>Preferred Pickup Date</h3>
+      </div>
+      <div class="form-card-body">
+        <div class="note-box">We will do our best to accommodate your preferred date. Our team will call to confirm the appointment.</div>
+        <div class="f2">
+          <div class="fg">
+            <label class="fl">Preferred Date <span class="req">*</span></label>
+            <input class="fi" id="pref-date" type="date">
+          </div>
+          <div class="fg">
+            <label class="fl">Preferred Time</label>
+            <select class="fs" id="pref-time">
+              <option value="">— Any time —</option>
+              <option>Morning (8am–12pm)</option>
+              <option>Afternoon (12pm–4pm)</option>
+              <option>Late Afternoon (4pm–6pm)</option>
+            </select>
+          </div>
+        </div>
+        <div class="fg">
+          <label class="fl">Will someone be on site? <span class="req">*</span></label>
+          <div class="yn-group">
+            <div class="yn-btn yes" onclick="selectOnsite(this,'yes')">✔ Yes — I will be there</div>
+            <div class="yn-btn no" onclick="selectOnsite(this,'no')">✗ No — Equipment accessible</div>
+          </div>
+          <input type="hidden" id="onsite" value="">
+        </div>
+        <div class="fg">
+          <label class="fl">Additional Notes</label>
+          <textarea class="fta" id="notes" placeholder="Anything else we should know — parking, weight limits, narrow gates, etc."></textarea>
+        </div>
+      </div>
+    </div>
+
+    <button class="submit-btn" onclick="submitForm()">Submit Pickup Request →</button>
+
+    <div class="form-footer">
+      By submitting this form you agree to be contacted by Big Gus Tractor & Equipment to schedule your pickup.<br>
+      Questions? Call us at <a href="tel:8509377009">850-937-7009</a>
+    </div>
+
+  </div><!-- end form-view -->
+
+  <!-- SUCCESS SCREEN -->
+  <div class="success-screen" id="success-screen">
+    <div class="success-icon">
+      <svg width="32" height="32" viewBox="0 0 24 24" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+    </div>
+    <h2>Request Submitted!</h2>
+    <p>Thank you! We received your pickup request and will call you within 1 business day to confirm your appointment.</p>
+    <div class="ref-box">
+      <div class="ref-lbl">Your Reference Number</div>
+      <div class="ref-num" id="ref-num">—</div>
+    </div>
+    <p>Save this reference number. You may be asked for it when we call.</p>
+    <p style="margin-top:16px;"><strong>Big Gus Tractor & Equipment</strong><br>
+    <a href="tel:8509377009" style="color:var(--gold);font-weight:600;">850-937-7009</a> · 1490 W Hwy 98, Mary Esther FL</p>
+  </div>
+
+</div><!-- end container -->
+
+<script>
+// ── FIREBASE URL — UPDATE THIS TO YOUR DATABASE ──────
+const FIREBASE_URL='https://fuckit-e173a-default-rtdb.firebaseio.com';
+
+let runsVal='';
+let onsiteVal='';
+
+// Set min date to today
+document.getElementById('pref-date').min=new Date().toISOString().slice(0,10);
+
+function selectRuns(el,val){
+  runsVal=val;
+  document.getElementById('runs').value=val;
+  document.querySelectorAll('#runs-group .radio-opt').forEach(x=>x.classList.remove('selected'));
+  el.classList.add('selected');
+  el.classList.remove('error-opt');
+}
+
+function selectOnsite(el,val){
+  onsiteVal=val;
+  document.getElementById('onsite').value=val;
+  document.querySelectorAll('.yn-btn').forEach(x=>x.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function genRef(){
+  const chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let r='BGT-';
+  for(let i=0;i<6;i++)r+=chars[Math.floor(Math.random()*chars.length)];
+  return r;
+}
+
+function clearErrors(){
+  document.querySelectorAll('.fi.error,.fs.error,.fta.error').forEach(el=>el.classList.remove('error'));
+  document.getElementById('err-banner').style.display='none';
+}
+
+async function submitForm(){
+  clearErrors();
+  const fname=document.getElementById('fname').value.trim();
+  const lname=document.getElementById('lname').value.trim();
+  const phone=document.getElementById('phone').value.trim();
+  const street=document.getElementById('street').value.trim();
+  const city=document.getElementById('city').value.trim();
+  const state=document.getElementById('state').value.trim();
+  const zip=document.getElementById('zip').value.trim();
+  const equipType=document.getElementById('equip-type').value;
+  const runs=document.getElementById('runs').value;
+  const issue=document.getElementById('issue').value.trim();
+  const prefDate=document.getElementById('pref-date').value;
+  const onsite=document.getElementById('onsite').value;
+
+  let errors=[];
+  if(!fname){document.getElementById('fname').classList.add('error');errors.push('First name');}
+  if(!lname){document.getElementById('lname').classList.add('error');errors.push('Last name');}
+  if(!phone){document.getElementById('phone').classList.add('error');errors.push('Phone number');}
+  if(!street){document.getElementById('street').classList.add('error');errors.push('Street address');}
+  if(!city){document.getElementById('city').classList.add('error');errors.push('City');}
+  if(!state){document.getElementById('state').classList.add('error');errors.push('State');}
+  if(!zip){document.getElementById('zip').classList.add('error');errors.push('Zip code');}
+  if(!equipType){document.getElementById('equip-type').classList.add('error');errors.push('Equipment type');}
+  if(!runs){document.querySelectorAll('#runs-group .radio-opt').forEach(x=>x.style.outline='2px solid #C62828');errors.push('Does it run?');}
+  if(!issue){document.getElementById('issue').classList.add('error');errors.push('Issue description');}
+  if(!prefDate){document.getElementById('pref-date').classList.add('error');errors.push('Preferred date');}
+  if(!onsite){document.querySelectorAll('.yn-btn').forEach(x=>x.style.outline='2px solid #C62828');errors.push('On site?');}
+
+  if(errors.length>0){
+    document.getElementById('err-banner').textContent='Please fill in: '+errors.join(', ');
+    document.getElementById('err-banner').style.display='block';
+    window.scrollTo({top:0,behavior:'smooth'});
+    return;
+  }
+
+  const btn=document.querySelector('.submit-btn');
+  btn.disabled=true;
+  btn.textContent='Submitting…';
+
+  const ref=genRef();
+  const request={
+    id:ref,
+    refNum:ref,
+    type:'customer_pickup_request',
+    status:'new',
+    submittedAt:new Date().toISOString(),
+    customer:{
+      firstName:fname,
+      lastName:lname,
+      fullName:fname+' '+lname,
+      phone,
+      email:document.getElementById('email').value.trim(),
+    },
+    address:{
+      street,city,state,zip,
+      full:street+', '+city+', '+state+' '+zip,
+      gate:document.getElementById('gate').value.trim(),
+    },
+    equipment:{
+      type:equipType,
+      brand:document.getElementById('brand').value.trim(),
+      model:document.getElementById('model').value.trim(),
+      serial:document.getElementById('serial').value.trim(),
+      runs,
+      issue,
+    },
+    schedule:{
+      preferredDate:prefDate,
+      preferredTime:document.getElementById('pref-time').value,
+      onsiteAtPickup:onsite,
+    },
+    notes:document.getElementById('notes').value.trim(),
+  };
+
+  try{
+    const url=`${FIREBASE_URL}/pickupRequests/${ref}.json`;
+    const r=await fetch(url,{
+      method:'PUT',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(request)
+    });
+    if(!r.ok)throw new Error('Server error '+r.status);
+
+    // Show success
+    document.getElementById('form-view').style.display='none';
+    document.getElementById('ref-num').textContent=ref;
+    document.getElementById('success-screen').style.display='block';
+    window.scrollTo({top:0,behavior:'smooth'});
+  }catch(err){
+    btn.disabled=false;
+    btn.textContent='Submit Pickup Request →';
+    document.getElementById('err-banner').textContent='There was a problem submitting your request. Please call us at 850-937-7009.';
+    document.getElementById('err-banner').style.display='block';
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+}
+</script>
+</body>
+</html>
