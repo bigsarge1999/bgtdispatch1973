@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Big Sarge Transportation - Dispatch Console</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; background-color: #eef2f5; color: #333; }
+        header { background-color: #1a365d; color: white; padding: 20px; text-align: center; }
+        header h1 { margin: 0; font-size: 28px; letter-spacing: 1px; }
+        .container { max-width: 1200px; margin: 20px auto; padding: 0 20px; }
+        
+        /* Tabs */
+        .tab { overflow: hidden; background-color: #fff; border-radius: 8px 8px 0 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .tab button { background-color: inherit; float: left; border: none; outline: none; cursor: pointer; padding: 16px 24px; transition: 0.3s; font-size: 16px; font-weight: bold; color: #555; }
+        .tab button:hover { background-color: #e2e8f0; }
+        .tab button.active { background-color: #2b6cb0; color: white; }
+        
+        /* Content */
+        .tabcontent { display: none; padding: 20px; background-color: #fff; border-radius: 0 0 8px 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        h2 { border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; margin-top: 0; color: #2d3748; }
+        
+        /* Forms */
+        .grid-form { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .form-group { display: flex; flex-direction: column; }
+        label { font-weight: 600; margin-bottom: 8px; color: #4a5568; }
+        input, select, textarea { padding: 10px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 14px; }
+        input:focus, select:focus { border-color: #2b6cb0; outline: none; }
+        
+        .full-width { grid-column: span 2; }
+        
+        button.submit-btn { background-color: #38a169; color: white; padding: 12px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; font-weight: bold; margin-top: 20px; width: 100%; transition: 0.2s; }
+        button.submit-btn:hover { background-color: #2f855a; }
+
+        /* KPI Dashboard */
+        .kpi-board { display: flex; gap: 20px; margin-bottom: 20px; }
+        .kpi-card { flex: 1; background-color: #ebf8fa; padding: 20px; border-radius: 8px; text-align: center; border: 1px solid #b2ebf2; }
+        .kpi-card h3 { margin: 0 0 10px 0; color: #319795; }
+        .kpi-card p { margin: 0; font-size: 24px; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>BIG SARGE TRANSPORTATION</h1>
+    </header>
+
+    <div class="container">
+        <div class="tab">
+            <button class="tablinks" onclick="openTab(event, 'Dashboard')" id="defaultOpen">Dashboard</button>
+            <button class="tablinks" onclick="openTab(event, 'NewLoad')">New Load</button>
+            <button class="tablinks" onclick="openTab(event, 'Fleet')">Fleet & Assets</button>
+            <button class="tablinks" onclick="openTab(event, 'Compliance')">Compliance</button>
+        </div>
+
+        <div id="Dashboard" class="tabcontent">
+            <h2>Live Dispatch Board & KPIs</h2>
+            <div class="kpi-board">
+                <div class="kpi-card">
+                    <h3>Active Loads</h3>
+                    <p id="kpiActive">0</p>
+                </div>
+                <div class="kpi-card">
+                    <h3>Total Revenue</h3>
+                    <p id="kpiRevenue">$0.00</p>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label>Quick Load Entry (Origin to Destination):</label>
+                <input type="text" id="quickLoadInput" placeholder="e.g., Navarre, FL to Lexington, KY">
+                <button class="submit-btn" onclick="submitQuickLoad()" style="width: auto; margin-top: 10px;">Post to Board</button>
+            </div>
+        </div>
+
+        <div id="NewLoad" class="tabcontent">
+            <h2>Full Load Entry</h2>
+            <div class="grid-form">
+                <div class="form-group">
+                    <label>Origin:</label>
+                    <input type="text" id="loadOrigin" placeholder="City, State">
+                </div>
+                <div class="form-group">
+                    <label>Destination:</label>
+                    <input type="text" id="loadDest" placeholder="City, State">
+                </div>
+                <div class="form-group">
+                    <label>Freight Details:</label>
+                    <input type="text" id="freightDesc" placeholder="Commodity type & dimensions">
+                </div>
+                <div class="form-group">
+                    <label>Weight (lbs):</label>
+                    <input type="number" id="freightWeight">
+                </div>
+                <div class="form-group">
+                    <label>Rate / Revenue ($):</label>
+                    <input type="number" id="loadRate" placeholder="0.00">
+                </div>
+                <div class="form-group">
+                    <label>Fuel Surcharge ($):</label>
+                    <input type="number" id="fuelSurcharge" placeholder="0.00">
+                </div>
+            </div>
+            <button class="submit-btn" onclick="submitFullLoad()">Save Load & Financials</button>
+        </div>
+
+        <div id="Fleet" class="tabcontent">
+            <h2>Fleet & Asset Tracking</h2>
+            <div class="grid-form">
+                <div class="form-group">
+                    <label>Vehicle / Unit ID:</label>
+                    <input type="text" id="unitId" placeholder="e.g., Unit 01 (Ram 3500)">
+                </div>
+                <div class="form-group">
+                    <label>GVWR (lbs):</label>
+                    <input type="number" id="gvwr">
+                </div>
+                <div class="form-group full-width">
+                    <label>Tire Specifications & Upgrades:</label>
+                    <select id="tireSpecs">
+                        <option value="225/70/19.5">225/70/19.5 - Highest Priority Upgrade</option>
+                        <option value="Standard">Standard Factory Tires</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Comms Status:</label>
+                    <select id="starlinkStatus">
+                        <option value="Active">Starlink Mini - Active</option>
+                        <option value="Inactive">Offline</option>
+                    </select>
+                </div>
+            </div>
+            <button class="submit-btn" onclick="submitFleetData()">Update Fleet Record</button>
+        </div>
+
+        <div id="Compliance" class="tabcontent">
+            <h2>Compliance & Tracking</h2>
+            <div class="grid-form">
+                <div class="form-group">
+                    <label>IFTA Miles Driven:</label>
+                    <input type="number" id="iftaMiles">
+                </div>
+                <div class="form-group">
+                    <label>Fuel Purchased (Gallons):</label>
+                    <input type="number" id="iftaGallons">
+                </div>
+                <div class="form-group">
+                    <label>BOL / Scale Ticket #:</label>
+                    <input type="text" id="bolTicket">
+                </div>
+                <div class="form-group">
+                    <label>Cargo Securement (G70 Chains / Straps):</label>
+                    <select id="securementCheck">
+                        <option value="Verified">Verified - FMCSA Compliant</option>
+                        <option value="Pending">Pending Inspection</option>
+                    </select>
+                </div>
+            </div>
+            <button class="submit-btn" onclick="submitCompliance()">Log Compliance Data</button>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <script>
+        // 1. Initialize Firebase with the provided URL
+        const firebaseConfig = {
+            databaseURL: "https://bgte1973-default-rtdb.asia-southeast1.firebasedatabase.app"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        // 2. Tab Navigation Function
+        function openTab(evt, tabName) {
+            let i, tabcontent, tablinks;
+            tabcontent = document.getElementsByClassName("tabcontent");
+            for (i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].style.display = "none";
+            }
+            tablinks = document.getElementsByClassName("tablinks");
+            for (i = 0; i < tablinks.length; i++) {
+                tablinks[i].className = tablinks[i].className.replace(" active", "");
+            }
+            document.getElementById(tabName).style.display = "block";
+            evt.currentTarget.className += " active";
+        }
+        document.getElementById("defaultOpen").click();
+
+        // 3. Database Submission Functions
+        
+        function submitQuickLoad() {
+            const route = document.getElementById('quickLoadInput').value;
+            if(!route) return;
+            
+            db.ref('Quotes_and_Loads').push({
+                routeDetails: route,
+                type: 'QuickEntry',
+                timestamp: Date.now()
+            });
+            alert('Quick load posted to board!');
+            document.getElementById('quickLoadInput').value = '';
+        }
+
+        function submitFullLoad() {
+            // Push to Quotes_and_Loads, nesting Financials
+            const loadRef = db.ref('Quotes_and_Loads').push();
+            loadRef.set({
+                origin: document.getElementById('loadOrigin').value,
+                destination: document.getElementById('loadDest').value,
+                freight: document.getElementById('freightDesc').value,
+                weight: document.getElementById('freightWeight').value,
+                timestamp: Date.now(),
+                Financials: {
+                    rate: document.getElementById('loadRate').value,
+                    fuelSurcharge: document.getElementById('fuelSurcharge').value
+                }
+            });
+            alert('Full Load & Financials Saved!');
+            // Reset fields
+            ['loadOrigin', 'loadDest', 'freightDesc', 'freightWeight', 'loadRate', 'fuelSurcharge'].forEach(id => document.getElementById(id).value = '');
+        }
+
+        function submitFleetData() {
+            db.ref('Fleet_and_Assets').push({
+                unitId: document.getElementById('unitId').value,
+                gvwr: document.getElementById('gvwr').value,
+                tires: document.getElementById('tireSpecs').value,
+                starlinkStatus: document.getElementById('starlinkStatus').value,
+                lastUpdated: Date.now()
+            });
+            alert('Fleet asset updated!');
+            document.getElementById('unitId').value = '';
+            document.getElementById('gvwr').value = '';
+        }
+
+        function submitCompliance() {
+            db.ref('Compliance_and_Tracking').push({
+                iftaMiles: document.getElementById('iftaMiles').value,
+                iftaGallons: document.getElementById('iftaGallons').value,
+                bolTicket: document.getElementById('bolTicket').value,
+                securementCheck: document.getElementById('securementCheck').value,
+                timestamp: Date.now()
+            });
+            alert('Compliance log recorded!');
+            ['iftaMiles', 'iftaGallons', 'bolTicket'].forEach(id => document.getElementById(id).value = '');
+        }
+    </script>
+</body>
+</html>
