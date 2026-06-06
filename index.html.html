@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Big Sarge Transportation - Dispatch & Profitability</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-color: #121214; color: #e4e4e7; }
+        /* Custom scrollbar for the long form */
+        .form-scroll::-webkit-scrollbar { width: 6px; }
+        .form-scroll::-webkit-scrollbar-track { background: #18181b; }
+        .form-scroll::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 4px; }
+    </style>
+</head>
+<body class="min-h-screen font-sans">
+
+    <header class="bg-zinc-900 border-b border-zinc-800 p-5 shadow-md">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+            <div>
+                <h1 class="text-2xl font-bold text-amber-500 tracking-wide uppercase">Big Sarge Transportation</h1>
+                <p class="text-sm text-zinc-400">Fleet Dispatch & OTR Profitability Console</p>
+            </div>
+            <div id="dbStatus" class="bg-zinc-800 px-4 py-2 rounded-lg text-xs text-zinc-300 font-mono border border-zinc-700">
+                DB: bgte1973-default
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <section class="lg:col-span-5 bg-zinc-900 p-5 rounded-xl border border-zinc-800 shadow-sm flex flex-col h-[85vh]">
+            <h2 class="text-lg font-semibold text-zinc-200 border-b border-zinc-800 pb-2 mb-4 shrink-0">Log New Trip</h2>
+            
+            <div class="overflow-y-auto form-scroll pr-2 pb-4 space-y-6 flex-grow">
+                <form id="dispatchForm" class="space-y-6">
+                    
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-amber-500 mb-1">Load / Pro Number *</label>
+                        <input type="text" id="loadNumber" required placeholder="e.g., quote_id_1001" class="w-full bg-zinc-800 border border-zinc-700 rounded p-2 text-white focus:outline-none focus:border-amber-500">
+                    </div>
+
+                    <div class="space-y-3 p-3 border border-zinc-800 rounded bg-zinc-950/50">
+                        <h3 class="text-xs font-semibold text-zinc-300 uppercase">1. Routing & Logistics</h3>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs text-zinc-400 mb-1">Origin City/ST</label>
+                                <input type="text" id="origin" required class="w-full bg-zinc-800 border border-zinc-700 rounded p-1.5 text-sm text-white focus:border-amber-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-zinc-400 mb-1">Origin Zip</label>
+                                <input type="text" id="originZip" class="w-full bg-zinc-800 border border-zinc-700 rounded p-1.5 text-sm text-white focus:border-amber-500">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs text-zinc-400 mb-1">Dest. City/ST</label>
+                                <input type="text" id="destination" required class="w-full bg-zinc-800 border border-zinc-700 rounded p-1.5 text-sm text-white focus:border-amber-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-zinc-400 mb-1">Dest. Zip</label>
+                                <input type="text" id="destinationZip" class="w-full bg-zinc-800 border border-zinc-700 rounded p-1.5 text-sm text-white focus:border-amber-500">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs text-zinc-400 mb-1">Loaded Miles</label>
+                                <input type="number" id="loadedMiles" required min="0" class="w-full bg-zinc-800 border border-zinc-700 rounded p-1.5 text-sm text-white focus:border-amber-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-zinc-400 mb-1">Deadhead Miles</label>
+                                <input type="number" id="deadheadMiles" min="0" value="0" class="w-full bg-zinc-800 border border-zinc-700 rounded p-1.5 text-sm text-white focus:border-amber-500">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs text-zinc-400 mb-1">Pickup Date/Time</label>
+                                <input type="datetime-local" id="pickupDate" class="w-full bg-zinc-800 border border-zinc-700 rounded p-1.5 text-sm text-white focus:border-amber-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-zinc-400 mb-1">Delivery Date/Time</label>
+                                <input type="datetime-local" id="deliveryDate" class="w-full bg-zinc-800 border border-zinc-700 rounded p-1.5 text-sm text-white focus:border-amber-500">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-3 p-3 border border-zinc-800 rounded bg-zinc-950/50">
+                        <h3 class="text-xs font-semibold text-zinc-300 uppercase">2. Freight & Equipment Details</h3>
+                        <div>
+                            <label class="block text-xs text-zinc-400 mb-1">Commodity Description</label>
+                            <input type="text" id="commodity" class="w-full bg-zinc-800 border border-zinc-700 rounded p-1.5 text-sm text-white focus:border-amber-500">
+                        </div>
+                        <div class="grid grid-cols-4 gap-2">
+                            <div>
+                                <label class="block text-xs text-zinc-400 mb-1">Weight (lbs)</label>
+                                <input type="number" id="weight" min="0" class="w-full bg-zinc-800 border border-zinc-700 rounded p-1.5 text-sm text-white focus:border-amber-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-zinc-400 mb-1">Length (ft)</label>
+                                <input type="number" id="length" min="0" class="w-full bg-zinc-800 border border-zinc-700 rounded p-1.5 text-sm text-white focus:border-amber-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-zinc-400 mb-1">Width (ft)</label>
+                                <input type="number" id="width" min="0" class="w-full bg-zinc-800 border border-zinc-700 rounded p-1.5 text-sm text-white focus:border-amber-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-zinc-400 mb-1">Height (ft)</label>
+                                <input type="number" id="height" min="0" class="w-full bg-zinc-800 border border-zinc-700 rounded p-1.5 text-sm text-white focus:border-amber-500">
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-2 mt-2 border-t border-zinc-800 pt-3">
+                            <label class="flex items-center space-x-2 text-xs text-zinc-300">
+                                <input type="checkbox" id="isHazmat" class="accent-amber-500"> <span>Hazmat</span>
+                            </label>
+                            <label class="flex items-center space-x-2 text-xs text-zinc-300">
+                                <input type="checkbox" id="reqTarps" class="accent-amber-500"> <span>Requires Tarps</span>
+                            </label>
+                            <label class="flex items-center space-x-2 text-xs text-zinc-300">
+                                <input type="checkbox" id="reqG70" class="accent-amber-500"> <span>G70 Chains Required</span>
+                            </label>
+                            <label class="flex items-center space-x-2 text-xs text-zinc-300">
+                                <input type="checkbox" id="reqBinders" class="accent-amber-500"> <span>Requires Binders</span>
+                            </label>
+                            <label class="flex items-center space-x-2 text-xs text-zinc-300">
+                                <input type="checkbox" id="reqDunnage" class="accent-amber-500"> <span>Dunnage Required</span>
+                            </label>
+                            <div class="flex items-center space-x-2">
+                                <label class="text-xs text-zinc-300">Chain Count:</label>
+                                <input type="number" id="chainCount" min="0" value="0" class="w-16 bg-zinc-800 border border-zinc-700 rounded p-1 text-xs text-white">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-3 p-3 border border-zinc-800 rounded bg-zinc-950/50">
+                        <h3 class="text-xs font-semibold text-zinc-300 uppercase">3. Financials</h3>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs text-zinc-400 mb-1">Base Linehaul ($)</label>
+                                <input type="number" id="linehaul" required min="0" step="0.01" class="w-full bg-zinc-800 border border-zinc-700 rounded p-1.5 text-sm text-white focus:border-amber-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-zinc-400 mb-1">Fuel Surcharge (FSC) ($)</label>
+                                <input type="number" id="fuelSurcharge" min="0" step="0.01" value="0" class="w-full bg-zinc-800 border border-zinc-700 rounded p-1.5 text-sm text-white focus:border-amber-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-zinc-400 mb-1">Tarping Fee ($)</label>
+                                <input type="number" id="tarpFee" min="0" step="0.01" value="0" class="w-full bg-zinc-800 border border-zinc-700 rounded p-1.5 text-sm text-white focus:border-amber-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-zinc-400 mb-1">Lumper Fee ($)</label>
+                                <input type="number" id="lumperFee" min="0" step="0.01" value="0" class="w-full bg-zinc-800 border border-zinc-700 rounded p-1.5 text-sm text-white focus:border-amber-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-zinc-400 mb-1">Tolls Allowance ($)</label>
+                                <input type="number" id="tolls" min="0" step="0.01" value="0" class="w-full bg-zinc-800 border border-zinc-700 rounded p-1.5 text-sm text-white focus:border-amber-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-zinc-400 mb-1">Payment Status</label>
+                                <select id="paymentStatus" class="w-full bg-zinc-800 border border-zinc-700 rounded p-1.5 text-sm text-white focus:border-amber-500">
+                                    <option value="Pending">Pending</option>
+                                    <option value="Invoiced">Invoiced</option>
+                                    <option value="Paid">Paid</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-3 p-3 border border-zinc-800 rounded bg-zinc-950/50">
+                        <h3 class="text-xs font-semibold text-zinc-300 uppercase">4. Fleet & Compliance</h3>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs text-zinc-400 mb-1">Assigned Truck ID</label>
+                                <input type="text" id="truckId" placeholder="e.g. Ram_3500_01" class="w-full bg-zinc-800 border border-zinc-700 rounded p-1.5 text-sm text-white focus:border-amber-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-zinc-400 mb-1">IFTA Taxable Miles</label>
+                                <input type="number" id="iftaMiles" min="0" value="0" class="w-full bg-zinc-800 border border-zinc-700 rounded p-1.5 text-sm text-white focus:border-amber-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-zinc-400 mb-1">Fuel Gallons Purchased</label>
+                                <input type="number" id="gallonsPurchased" min="0" step="0.1" value="0" class="w-full bg-zinc-800 border border-zinc-700 rounded p-1.5 text-sm text-white focus:border-amber-500">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 mt-2">
+                            <label class="flex items-center space-x-2 text-xs text-zinc-300">
+                                <input type="checkbox" id="scaleVerified" class="accent-amber-500"> <span>Scale Tickets Verified</span>
+                            </label>
+                            <label class="flex items-center space-x-2 text-xs text-zinc-300">
+                                <input type="checkbox" id="bolUploaded" class="accent-amber-500"> <span>BOL Signed & Uploaded</span>
+                            </label>
+                        </div>
+                    </div>
+
+                </form>
+            </div>
+            <button type="submit" form="dispatchForm" class="shrink-0 w-full bg-amber-500 hover:bg-amber-600 text-zinc-950 font-bold py-3 px-4 rounded transition duration-150 uppercase tracking-wide text-sm mt-4">
+                Commit Trip to Database
+            </button>
+        </section>
+
+        <section class="lg:col-span-7 space-y-6">
+            
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div class="bg-zinc-900 border border-zinc-800 p-4 rounded-xl shadow-sm">
+                    <p class="text-xs font-medium uppercase tracking-wider text-zinc-400">Total Operational Miles</p>
+                    <p id="metricTotalMiles" class="text-2xl font-bold text-white mt-1">0</p>
+                </div>
+                <div class="bg-zinc-900 border border-zinc-800 p-4 rounded-xl shadow-sm">
+                    <p class="text-xs font-medium uppercase tracking-wider text-zinc-400">Net Linehaul Yield</p>
+                    <p id="metricNetProfit" class="text-2xl font-bold text-emerald-400 mt-1">$0.00</p>
+                </div>
+                <div class="bg-zinc-900 border border-zinc-800 p-4 rounded-xl shadow-sm">
+                    <p class="text-xs font-medium uppercase tracking-wider text-zinc-400">Avg Revenue Per Mile</p>
+                    <p id="metricRPM" class="text-2xl font-bold text-amber-500 mt-1">$0.00</p>
+                </div>
+            </div>
+
+            <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-5 shadow-sm h-[65vh] overflow-hidden flex flex-col">
+                <h2 class="text-lg font-semibold text-zinc-200 border-b border-zinc-800 pb-2 mb-4 shrink-0">Active Trip Log</h2>
+                <div class="overflow-y-auto flex-grow form-scroll">
+                    <table class="w-full text-left border-collapse text-sm">
+                        <thead class="sticky top-0 bg-zinc-900 shadow-sm z-10">
+                            <tr class="border-b border-zinc-800 text-zinc-400 uppercase text-[10px] tracking-wider">
+                                <th class="pb-3 font-medium">Load #</th>
+                                <th class="pb-3 font-medium">Route</th>
+                                <th class="pb-3 font-medium">Commodity</th>
+                                <th class="pb-3 font-medium text-right">Miles</th>
+                                <th class="pb-3 font-medium text-right">Gross Pay</th>
+                                <th class="pb-3 font-medium text-center">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tripTableBody" class="divide-y divide-zinc-800 text-zinc-300">
+                            </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        const firebaseDbUrl = "https://bgte1973-default-rtdb.asia-southeast1.firebasedatabase.app/";
+
+        document.getElementById('dispatchForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const loadNum = document.getElementById('loadNumber').value.trim();
+            const loadedMiles = parseInt(document.getElementById('loadedMiles').value) || 0;
+            const linehaul = parseFloat(document.getElementById('linehaul').value) || 0;
+            const ratePerMile = loadedMiles > 0 ? (linehaul / loadedMiles).toFixed(2) : 0;
+            
+            // Financial Calculations
+            const fsc = parseFloat(document.getElementById('fuelSurcharge').value) || 0;
+            const tarp = parseFloat(document.getElementById('tarpFee').value) || 0;
+            const lumper = parseFloat(document.getElementById('lumperFee').value) || 0;
+            const tolls = parseFloat(document.getElementById('tolls').value) || 0;
+            const grossQuoteTotal = linehaul + fsc + tarp + lumper + tolls;
+
+            // Constructing the full nested payload matching the schema
+            const tripData = {
+                routing: {
+                    origin_address: document.getElementById('origin').value.trim(),
+                    origin_zip: document.getElementById('originZip').value.trim(),
+                    destination_address: document.getElementById('destination').value.trim(),
+                    destination_zip: document.getElementById('destinationZip').value.trim(),
+                    loaded_miles: loadedMiles,
+                    deadhead_miles: parseInt(document.getElementById('deadheadMiles').value) || 0
+                },
+                freight: {
+                    commodity_description: document.getElementById('commodity').value.trim(),
+                    total_weight_lbs: parseInt(document.getElementById('weight').value) || 0,
+                    length_ft: parseInt(document.getElementById('length').value) || 0,
+                    width_ft: parseInt(document.getElementById('width').value) || 0,
+                    height_ft: parseInt(document.getElementById('height').value) || 0,
+                    is_hazmat: document.getElementById('isHazmat').checked
+                },
+                securement: {
+                    requires_g70_chains: document.getElementById('reqG70').checked,
+                    chain_count_required: parseInt(document.getElementById('chainCount').value) || 0,
+                    requires_binders: document.getElementById('reqBinders').checked,
+                    requires_tarps: document.getElementById('reqTarps').checked,
+                    dunnage_required: document.getElementById('reqDunnage').checked
+                },
+                scheduling: {
+                    pickup_datetime: document.getElementById('pickupDate').value, // Saved as ISO String internally
+                    delivery_datetime: document.getElementById('deliveryDate').value,
+                    detention_hours_accrued: 0 // Default to 0 at intake
+                },
+                financials: {
+                    base_linehaul_rate: linehaul,
+                    fuel_surcharge_fsc: fsc,
+                    tarping_fee: tarp,
+                    lumper_fee: lumper,
+                    tolls_allowance: tolls,
+                    detention_rate_per_hour: 0, // Placeholder for future updates
+                    rate_per_mile: parseFloat(ratePerMile),
+                    gross_quote_total: grossQuoteTotal,
+                    payment_status: document.getElementById('paymentStatus').value
+                },
+                fleet_and_assets: {
+                    truck_id: document.getElementById('truckId').value.trim()
+                },
+                compliance
