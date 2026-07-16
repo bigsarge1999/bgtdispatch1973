@@ -1,0 +1,1271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Big Sarge Transportation — Dispatch Console</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --asphalt: #10151c;
+    --asphalt-2: #1a212b;
+    --steel: #3b4759;
+    --steel-dim: #2a3341;
+    --diesel: #e35205;
+    --diesel-dim: #a83e08;
+    --chrome: #aab4bd;
+    --paper: #eef1e6;
+    --caution: #f0a202;
+    --go: #4f8f5b;
+    --line: rgba(170,180,189,0.16);
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    background: var(--asphalt);
+    background-image:
+      radial-gradient(circle at 15% 0%, rgba(227,82,5,0.05), transparent 45%),
+      repeating-linear-gradient(90deg, rgba(255,255,255,0.012) 0px, rgba(255,255,255,0.012) 1px, transparent 1px, transparent 10px);
+    color: var(--paper);
+    font-family: 'JetBrains Mono', monospace;
+    min-height: 100vh;
+    padding: 28px 20px 60px;
+  }
+
+  /* ---------- Header / weigh-station sign ---------- */
+  .signboard{
+    max-width: 1120px;
+    margin: 0 auto 6px;
+    background: linear-gradient(180deg, var(--asphalt-2), var(--asphalt));
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 26px 30px;
+    position: relative;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.03);
+  }
+  .signboard::before, .signboard::after,
+  .signboard .rivet-tl, .signboard .rivet-br{
+    content:'';
+    position:absolute;
+    width:9px; height:9px;
+    border-radius:50%;
+    background: radial-gradient(circle at 35% 35%, #d8dde2, #6b7580 70%);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.6);
+  }
+  .signboard::before{ top:12px; left:12px; }
+  .signboard::after{ top:12px; right:12px; }
+  .signboard .rivet-tl{ bottom:12px; left:12px; }
+  .signboard .rivet-br{ bottom:12px; right:12px; }
+  .signboard .eyebrow{
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--diesel);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .signboard h1{
+    font-family:'Oswald', sans-serif;
+    font-weight: 700;
+    font-size: clamp(30px, 5vw, 48px);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--paper);
+    line-height: 1;
+  }
+  .signboard h1 span{ color: var(--diesel); }
+  .signboard .tagline{
+    margin-top: 8px;
+    color: var(--chrome);
+    font-size: 13px;
+    letter-spacing: 0.5px;
+  }
+  .signboard .est{
+    position:absolute;
+    right: 30px;
+    bottom: 22px;
+    font-family:'Oswald', sans-serif;
+    font-size: 12px;
+    color: var(--chrome);
+    letter-spacing: 2px;
+    opacity: 0.7;
+  }
+  /* highway lane-line divider */
+  .lane-divider{
+    max-width: 1120px;
+    margin: 0 auto 30px;
+    height: 6px;
+    background: repeating-linear-gradient(90deg, var(--caution) 0 26px, transparent 26px 46px);
+    opacity: 0.55;
+    border-radius: 3px;
+  }
+
+  /* ---------- Placard nav tabs ---------- */
+  nav.tags{
+    max-width: 1120px;
+    margin: 0 auto 30px;
+    display: flex;
+    gap: 22px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .tag-wrap{ display:flex; flex-direction: column; align-items:center; }
+  .chain{
+    width:1px; height:14px;
+    background: repeating-linear-gradient(180deg, var(--chrome) 0 3px, transparent 3px 6px);
+    opacity:0.5;
+  }
+  .tag{
+    position: relative;
+    background: var(--steel);
+    border: 1px solid rgba(0,0,0,0.3);
+    color: var(--paper);
+    font-family:'Oswald', sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 12px 22px;
+    cursor: pointer;
+    clip-path: polygon(0 0, 88% 0, 100% 50%, 88% 100%, 0 100%);
+    transition: transform 0.15s ease, background 0.2s ease;
+    box-shadow: 0 6px 14px rgba(0,0,0,0.35);
+  }
+  .tag::before{
+    content:'';
+    position:absolute; left:0; top:0; bottom:0;
+    width: 4px;
+    background: var(--caution);
+    opacity: 0.8;
+  }
+  .tag:hover{ transform: translateY(-2px); }
+  .tag.active{ background: var(--diesel); color: var(--asphalt); }
+  .tag.active::before{ background: var(--asphalt); opacity:0.3; }
+
+  main{ max-width: 1120px; margin: 0 auto; }
+  .panel{ display:none; animation: fadeIn 0.35s ease; }
+  .panel.active{ display:block; }
+  @keyframes fadeIn{ from{opacity:0; transform: translateY(6px);} to{opacity:1; transform:none;} }
+
+  .board{
+    background: var(--asphalt-2);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 22px 24px;
+    margin-bottom: 20px;
+  }
+  .board h2{
+    font-family:'Oswald', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-size: 20px;
+    color: var(--paper);
+    margin-bottom: 4px;
+  }
+  .board .sub{ font-size: 12px; color: var(--chrome); margin-bottom: 18px; }
+  .board-sep{ margin: 24px 0; border:none; border-top: 1px dashed var(--line); }
+
+  /* ---------- stat cards ---------- */
+  .stats{
+    display:grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px,1fr));
+    gap: 14px;
+    margin-bottom: 22px;
+  }
+  .stat{
+    background: var(--asphalt);
+    border: 1px solid var(--line);
+    border-top: 3px solid var(--diesel);
+    border-radius: 5px;
+    padding: 16px 18px;
+  }
+  .stat .label{
+    font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase;
+    color: var(--chrome); margin-bottom: 6px;
+  }
+  .stat .num{
+    font-family:'Oswald', sans-serif;
+    font-weight: 700;
+    font-size: 30px;
+    color: var(--paper);
+    line-height: 1;
+  }
+  .stat .num small{ font-size: 15px; color: var(--chrome); font-weight:500; }
+
+  /* ---------- forms ---------- */
+  .intake-form{
+    display:flex; flex-direction:column; gap: 14px;
+    background: var(--asphalt);
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    padding: 20px;
+    margin-bottom: 18px;
+  }
+  .form-row{ display:flex; flex-direction:column; gap:6px; }
+  .form-row label{
+    font-family:'Oswald', sans-serif;
+    font-size: 11px; letter-spacing: 1px; text-transform: uppercase;
+    color: var(--chrome);
+  }
+  .form-row input, .form-row select, .form-row textarea{
+    background: var(--asphalt-2);
+    border: 1px solid var(--line);
+    color: var(--paper);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    padding: 9px 11px;
+    border-radius: 4px;
+    outline: none;
+  }
+  .form-row input:focus, .form-row select:focus, .form-row textarea:focus{ border-color: var(--diesel); }
+  .form-grid{
+    display:grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 14px;
+  }
+  .form-actions{ display:flex; align-items:center; gap: 14px; margin-top: 4px; }
+  .submit-btn{
+    background: var(--diesel);
+    color: var(--asphalt);
+    border: none;
+    font-family: 'Oswald', sans-serif;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    font-size: 13px;
+    padding: 11px 22px;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  .submit-btn:hover{ background: #f0672a; }
+  .confirm-msg{ font-size: 12px; color: #8fc296; opacity: 0; transition: opacity 0.3s ease; }
+  .confirm-msg.show{ opacity: 1; }
+
+  /* ---------- tables ---------- */
+  table{ width:100%; border-collapse: collapse; font-size: 13px; }
+  th{
+    text-align:left;
+    font-family:'Oswald', sans-serif;
+    letter-spacing: 1px; text-transform: uppercase;
+    font-size: 11px; color: var(--chrome);
+    border-bottom: 1px solid var(--line);
+    padding: 8px 10px;
+  }
+  td{ padding: 11px 10px; border-bottom: 1px solid var(--line); color: var(--paper); }
+  tr:last-child td{ border-bottom: none; }
+  tr:hover td{ background: rgba(255,255,255,0.02); }
+
+  .status{
+    display:inline-block; padding: 3px 9px; border-radius: 3px;
+    font-size: 11px; letter-spacing: 0.5px; font-weight: 500;
+  }
+  .status.active{ background: rgba(227,82,5,0.15); color: var(--diesel); border:1px solid rgba(227,82,5,0.4); }
+  .status.delivered{ background: rgba(79,143,91,0.2); color: #8fc296; border:1px solid rgba(143,181,147,0.4); }
+  .status.pending{ background: rgba(240,162,2,0.15); color: var(--caution); border:1px solid rgba(240,162,2,0.4); }
+  .status.verified{ background: rgba(79,143,91,0.2); color: #8fc296; border:1px solid rgba(143,181,147,0.4); }
+  .status.offline{ background: rgba(170,180,189,0.12); color: var(--chrome); border:1px solid var(--line); }
+
+  .mini-btn{
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--chrome);
+    font-family:'Oswald', sans-serif;
+    font-size: 10px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    padding: 5px 10px;
+    border-radius: 3px;
+    cursor: pointer;
+  }
+  .mini-btn:hover{ border-color: var(--diesel); color: var(--diesel); }
+
+  .empty-note{ color: var(--chrome); font-style: italic; }
+
+  footer{
+    max-width:1120px; margin: 30px auto 0;
+    text-align:center; font-size: 11px; color: var(--chrome); opacity:0.6;
+    letter-spacing: 1px;
+  }
+
+  @media (max-width: 560px){
+    table, thead, tbody, th, td, tr{ display:block; }
+    thead{ display:none; }
+    td{ display:flex; justify-content:space-between; border:none; padding: 6px 4px; gap:10px; }
+    tr{ border-bottom: 1px solid var(--line); padding: 8px 0; }
+    td::before{ content: attr(data-label); color: var(--chrome); font-size:10px; text-transform:uppercase; letter-spacing:1px; }
+  }
+
+  :focus-visible{ outline: 2px solid var(--diesel); outline-offset: 2px; }
+  @media (prefers-reduced-motion: reduce){ *{ animation: none !important; transition: none !important; } }
+</style>
+</head>
+<body>
+
+  <div class="signboard">
+    <div class="rivet-tl"></div><div class="rivet-br"></div>
+    <div class="eyebrow">Dispatch &amp; Compliance Console</div>
+    <h1>Big <span>Sarge</span> Transportation</h1>
+    <div class="tagline">Every load logged. Every mile accounted for.</div>
+    <div class="est">DOT DISPATCH BOARD</div>
+  </div>
+  <div class="lane-divider"></div>
+
+  <nav class="tags">
+    <div class="tag-wrap"><div class="chain"></div>
+      <div class="tag active" data-target="dashboard" tabindex="0">Dashboard</div>
+    </div>
+    <div class="tag-wrap"><div class="chain"></div>
+      <div class="tag" data-target="newload" tabindex="0">New Load</div>
+    </div>
+    <div class="tag-wrap"><div class="chain"></div>
+      <div class="tag" data-target="fleet" tabindex="0">Fleet &amp; Assets</div>
+    </div>
+    <div class="tag-wrap"><div class="chain"></div>
+      <div class="tag" data-target="compliance" tabindex="0">Compliance</div>
+    </div>
+    <div class="tag-wrap"><div class="chain"></div>
+      <div class="tag" data-target="customers" tabindex="0">Customers</div>
+    </div>
+    <div class="tag-wrap"><div class="chain"></div>
+      <div class="tag" data-target="admin" tabindex="0">Admin</div>
+    </div>
+  </nav>
+
+  <main>
+    <!-- DASHBOARD -->
+    <section class="panel active" id="dashboard">
+      <div class="board">
+        <h2>Live Dispatch Board</h2>
+        <div class="sub">Real-time from every device connected to this console</div>
+        <div class="stats">
+          <div class="stat"><div class="label">Active Loads</div><div class="num" id="kpiActive">0</div></div>
+          <div class="stat"><div class="label">Total Revenue</div><div class="num"><small>$</small><span id="kpiRevenue">0.00</span></div></div>
+          <div class="stat"><div class="label">Fleet Units</div><div class="num" id="kpiUnits">0</div></div>
+          <div class="stat"><div class="label">IFTA Miles Logged</div><div class="num" id="kpiMiles">0</div></div>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-row">
+            <label for="quickLoadInput">Quick Load Entry (Origin to Destination)</label>
+            <input type="text" id="quickLoadInput" placeholder="e.g., Navarre, FL to Lexington, KY">
+          </div>
+          <div class="form-row">
+            <label for="quickLoadCustomer">Customer / Broker</label>
+            <input type="text" id="quickLoadCustomer" placeholder="e.g., Landstar, or company name">
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="submit-btn" id="quickLoadBtn">Post to Board</button>
+          <span id="quickLoadConfirm" class="confirm-msg"></span>
+        </div>
+
+        <hr class="board-sep">
+        <h2>Board</h2>
+        <div class="sub">Every load posted, newest first</div>
+        <table>
+          <thead><tr><th>Route / Freight</th><th>Weight</th><th>Rate</th><th>Status</th><th></th></tr></thead>
+          <tbody id="loadBoardBody">
+            <tr><td colspan="5" class="empty-note">No loads posted yet — use Quick Load Entry above or the New Load tab.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- NEW LOAD -->
+    <section class="panel" id="newload">
+      <div class="board">
+        <h2>Full Load Entry</h2>
+        <div class="sub">Route, freight, and financials in one record</div>
+
+        <form id="fullLoadForm" class="intake-form">
+          <div class="form-grid">
+            <div class="form-row">
+              <label for="loadOrigin">Origin</label>
+              <input type="text" id="loadOrigin" placeholder="City, State" required>
+            </div>
+            <div class="form-row">
+              <label for="loadDest">Destination</label>
+              <input type="text" id="loadDest" placeholder="City, State" required>
+            </div>
+          </div>
+          <div class="form-row">
+            <label for="loadCustomer">Customer / Broker</label>
+            <input type="text" id="loadCustomer" placeholder="e.g., Landstar, or shipper name" required>
+          </div>
+          <div class="form-row">
+            <label for="freightDesc">Freight Details</label>
+            <input type="text" id="freightDesc" placeholder="Commodity type &amp; dimensions">
+          </div>
+          <div class="form-grid">
+            <div class="form-row">
+              <label for="freightWeight">Weight (lbs)</label>
+              <input type="number" id="freightWeight" min="0" step="1">
+            </div>
+            <div class="form-row">
+              <label for="loadRate">Rate / Revenue ($)</label>
+              <input type="number" id="loadRate" min="0" step="0.01" placeholder="0.00">
+            </div>
+            <div class="form-row">
+              <label for="fuelSurcharge">Fuel Surcharge ($)</label>
+              <input type="number" id="fuelSurcharge" min="0" step="0.01" placeholder="0.00">
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="submit-btn">Save Load &amp; Financials</button>
+            <span id="fullLoadConfirm" class="confirm-msg"></span>
+          </div>
+        </form>
+
+        <hr class="board-sep">
+        <h2>Load History</h2>
+        <div class="sub">All full-detail loads saved from this tab</div>
+        <table>
+          <thead><tr><th>Route</th><th>Customer</th><th>Freight</th><th>Weight</th><th>Rate</th><th>Fuel</th><th>Total</th><th>Status</th><th></th></tr></thead>
+          <tbody id="loadHistoryBody">
+            <tr><td colspan="9" class="empty-note">No full loads logged yet.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- FLEET -->
+    <section class="panel" id="fleet">
+      <div class="board">
+        <h2>Fleet &amp; Asset Tracking</h2>
+        <div class="sub">Every unit on the road, and how it's spec'd</div>
+
+        <form id="fleetForm" class="intake-form">
+          <div class="form-grid">
+            <div class="form-row">
+              <label for="unitId">Vehicle / Unit ID</label>
+              <input type="text" id="unitId" placeholder="e.g., Unit 01 (Ram 3500)" required>
+            </div>
+            <div class="form-row">
+              <label for="gvwr">GVWR (lbs)</label>
+              <input type="number" id="gvwr" min="0" step="1">
+            </div>
+          </div>
+          <div class="form-row">
+            <label for="tireSpecs">Tire Specifications &amp; Upgrades</label>
+            <select id="tireSpecs">
+              <option value="225/70/19.5">225/70/19.5 — Highest Priority Upgrade</option>
+              <option value="Standard">Standard Factory Tires</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <label for="starlinkStatus">Comms Status</label>
+            <select id="starlinkStatus">
+              <option value="Active">Starlink Mini — Active</option>
+              <option value="Inactive">Offline</option>
+            </select>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="submit-btn">Update Fleet Record</button>
+            <span id="fleetConfirm" class="confirm-msg"></span>
+          </div>
+        </form>
+
+        <hr class="board-sep">
+        <h2>Roster</h2>
+        <div class="sub">Every unit currently on file</div>
+        <table>
+          <thead><tr><th>Unit</th><th>GVWR</th><th>Tires</th><th>Comms</th></tr></thead>
+          <tbody id="fleetBody">
+            <tr><td colspan="4" class="empty-note">No fleet records yet.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- COMPLIANCE -->
+    <section class="panel" id="compliance">
+      <div class="board">
+        <h2>Compliance &amp; Tracking</h2>
+        <div class="sub">IFTA, BOL, and cargo securement records</div>
+
+        <form id="complianceForm" class="intake-form">
+          <div class="form-grid">
+            <div class="form-row">
+              <label for="iftaMiles">IFTA Miles Driven</label>
+              <input type="number" id="iftaMiles" min="0" step="1">
+            </div>
+            <div class="form-row">
+              <label for="iftaGallons">Fuel Purchased (Gallons)</label>
+              <input type="number" id="iftaGallons" min="0" step="0.01">
+            </div>
+          </div>
+          <div class="form-row">
+            <label for="bolTicket">BOL / Scale Ticket #</label>
+            <input type="text" id="bolTicket" placeholder="e.g., BOL-88213">
+          </div>
+          <div class="form-row">
+            <label for="securementCheck">Cargo Securement (G70 Chains / Straps)</label>
+            <select id="securementCheck">
+              <option value="Verified">Verified — FMCSA Compliant</option>
+              <option value="Pending">Pending Inspection</option>
+            </select>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="submit-btn">Log Compliance Data</button>
+            <span id="complianceConfirm" class="confirm-msg"></span>
+          </div>
+        </form>
+
+        <hr class="board-sep">
+        <h2>Compliance Log</h2>
+        <div class="sub">Every entry, with running miles &amp; gallons totals</div>
+        <table>
+          <thead><tr><th>Miles</th><th>Gallons</th><th>MPG</th><th>BOL #</th><th>Securement</th></tr></thead>
+          <tbody id="complianceBody">
+            <tr><td colspan="5" class="empty-note">No compliance entries yet.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- CUSTOMERS -->
+    <section class="panel" id="customers">
+      <div class="board">
+        <h2>Customer Database</h2>
+        <div class="sub">Builds itself automatically — every load you dispatch (Quick or Full) adds to this</div>
+        <table>
+          <thead><tr><th>Customer / Broker</th><th>Loads Dispatched</th><th>Total Revenue</th><th>Last Load</th><th>Last Route</th></tr></thead>
+          <tbody id="customersBody">
+            <tr><td colspan="5" class="empty-note">No customers yet — dispatch a load with a customer/broker name to see them here.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ADMIN -->
+    <section class="panel" id="admin">
+      <div class="board">
+        <h2>Company Info</h2>
+        <div class="sub">Saved once, shown wherever it's needed later</div>
+        <form id="companyForm" class="intake-form">
+          <div class="form-grid">
+            <div class="form-row">
+              <label for="companyName">Company Name</label>
+              <input type="text" id="companyName" placeholder="Big Sarge Transportation">
+            </div>
+            <div class="form-row">
+              <label for="companyPhone">Phone</label>
+              <input type="text" id="companyPhone" placeholder="(555) 555-5555">
+            </div>
+          </div>
+          <div class="form-grid">
+            <div class="form-row">
+              <label for="companyDot">DOT #</label>
+              <input type="text" id="companyDot" placeholder="e.g., 1234567">
+            </div>
+            <div class="form-row">
+              <label for="companyMc">MC #</label>
+              <input type="text" id="companyMc" placeholder="e.g., MC-123456">
+            </div>
+          </div>
+          <div class="form-row">
+            <label for="companyAddress">Business Address</label>
+            <input type="text" id="companyAddress" placeholder="Street, City, State, ZIP">
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="submit-btn">Save Company Info</button>
+            <span id="companyConfirm" class="confirm-msg"></span>
+          </div>
+        </form>
+
+        <hr class="board-sep">
+        <h2>Driver Roster</h2>
+        <div class="sub">Everyone authorized to run a load</div>
+        <form id="driverForm" class="intake-form">
+          <div class="form-grid">
+            <div class="form-row">
+              <label for="driverName">Driver Name</label>
+              <input type="text" id="driverName" placeholder="e.g., J. Pelfrey" required>
+            </div>
+            <div class="form-row">
+              <label for="driverCdl">CDL Class / Endorsements</label>
+              <input type="text" id="driverCdl" placeholder="e.g., Class A, Hazmat">
+            </div>
+          </div>
+          <div class="form-grid">
+            <div class="form-row">
+              <label for="driverPhone">Phone</label>
+              <input type="text" id="driverPhone" placeholder="(555) 555-5555">
+            </div>
+            <div class="form-row">
+              <label for="driverStatus">Status</label>
+              <select id="driverStatus">
+                <option>Active</option>
+                <option>Inactive</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="submit-btn">Add Driver</button>
+            <span id="driverConfirm" class="confirm-msg"></span>
+          </div>
+        </form>
+        <table>
+          <thead><tr><th>Driver</th><th>CDL / Endorsements</th><th>Phone</th><th>Status</th></tr></thead>
+          <tbody id="driversBody">
+            <tr><td colspan="4" class="empty-note">No drivers on file yet.</td></tr>
+          </tbody>
+        </table>
+
+        <hr class="board-sep">
+        <h2>Backup &amp; Export</h2>
+        <div class="sub">Everything lives in the live Firebase database — export a snapshot any time as a safety net</div>
+        <div class="form-actions">
+          <button type="button" id="exportBackupBtn" class="submit-btn">Export Full Backup (JSON)</button>
+          <span id="backupConfirm" class="confirm-msg"></span>
+        </div>
+
+        <hr class="board-sep">
+        <h2>Security Note</h2>
+        <div class="sub" style="font-style:italic;">This console writes to a public Firebase database URL that's visible in the page source. That's fine for personal use, but if this ever holds sensitive customer data, its read/write rules should be locked down rather than left open.</div>
+      </div>
+    </section>
+  </main>
+
+  <footer>Big Sarge Transportation — Dispatch Console · synced live via Firebase</footer>
+
+// ================= AUTO TASK TAB =================
+
+document.querySelector('.tags').insertAdjacentHTML('beforeend', `
+<div class="tag-wrap">
+  <div class="chain"></div>
+  <div class="tag" data-target="tasks" tabindex="0">
+    Tasks
+  </div>
+</div>
+`);
+
+document.querySelector('main').insertAdjacentHTML('beforeend', `
+
+<section class="panel" id="tasks">
+
+  <div class="board">
+
+    <h2>Task Management</h2>
+
+    <div class="sub">
+      Pick up parts, repairs, paperwork, deliveries,
+      inspections and general company tasks.
+    </div>
+
+    <form id="taskForm" class="intake-form">
+
+      <div class="form-row">
+        <label>Task</label>
+        <input id="taskTitle" required>
+      </div>
+
+      <div class="form-row">
+        <label>Description</label>
+        <textarea id="taskDescription"></textarea>
+      </div>
+
+      <div class="form-grid">
+
+        <div class="form-row">
+          <label>Assigned To</label>
+          <input id="taskAssigned">
+        </div>
+
+        <div class="form-row">
+          <label>Priority</label>
+
+          <select id="taskPriority">
+            <option>Low</option>
+            <option selected>Normal</option>
+            <option>High</option>
+            <option>Urgent</option>
+          </select>
+
+        </div>
+
+        <div class="form-row">
+          <label>Due Date</label>
+          <input type="date" id="taskDueDate">
+        </div>
+
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="submit-btn">
+          Create Task
+        </button>
+      </div>
+
+    </form>
+
+    <hr class="board-sep">
+
+    <table>
+
+      <thead>
+        <tr>
+          <th>Task</th>
+          <th>Assigned</th>
+          <th>Priority</th>
+          <th>Status</th>
+          <th></th>
+        </tr>
+      </thead>
+
+      <tbody id="tasksBody">
+        <tr>
+          <td colspan="5" class="empty-note">
+            No tasks yet.
+          </td>
+        </tr>
+      </tbody>
+
+    </table>
+
+  </div>
+
+</section>
+
+`);
+
+setTimeout(() => {
+
+  document.querySelectorAll('.tag').forEach(tag => {
+
+    tag.addEventListener('click', () => {
+
+      document.querySelectorAll('.tag')
+      .forEach(t => t.classList.remove('active'));
+
+      document.querySelectorAll('.panel')
+      .forEach(p => p.classList.remove('active'));
+
+      tag.classList.add('active');
+
+      const panel =
+      document.getElementById(tag.dataset.target);
+
+      if(panel) panel.classList.add('active');
+
+    });
+
+  });
+
+},500);
+
+
+// ================= TASKS =================
+
+function renderTasks(taskData){
+
+  const body = document.getElementById('tasksBody');
+
+  if(!body) return;
+
+  const entries =
+  Object.keys(taskData || {})
+  .map(id => ({
+    id,
+    ...taskData[id]
+  }))
+  .sort((a,b)=>
+    (b.timestamp||0)-(a.timestamp||0)
+  );
+
+  if(entries.length===0){
+
+    body.innerHTML=
+    `<tr>
+      <td colspan="5" class="empty-note">
+        No tasks yet.
+      </td>
+     </tr>`;
+
+    return;
+  }
+
+  body.innerHTML = entries.map(task => `
+    <tr>
+
+      <td>
+        <strong>${escapeHtml(task.title || '')}</strong>
+        <br>
+        <small>
+          ${escapeHtml(task.description || '')}
+        </small>
+      </td>
+
+      <td>
+        ${escapeHtml(task.assignedTo || '')}
+      </td>
+
+      <td>
+        ${escapeHtml(task.priority || '')}
+      </td>
+
+      <td>
+
+        <span class="status ${
+          task.status === 'Completed'
+          ? 'verified'
+          : 'pending'
+        }">
+
+        ${escapeHtml(task.status || 'Open')}
+
+        </span>
+
+      </td>
+
+      <td>
+
+        ${
+          task.status !== 'Completed'
+          ? `
+          <button
+            class="mini-btn completeTask"
+            data-id="${task.id}">
+            Complete
+          </button>
+          `
+          : ''
+        }
+
+      </td>
+
+    </tr>
+  `).join('');
+
+  document
+  .querySelectorAll('.completeTask')
+  .forEach(btn => {
+
+    btn.addEventListener('click', () => {
+
+      db.ref('Tasks/' + btn.dataset.id)
+      .update({
+        status:'Completed'
+      });
+
+    });
+
+  });
+
+}
+
+db.ref('Tasks').on('value', snapshot => {
+  renderTasks(snapshot.val());
+});
+
+
+setTimeout(()=>{
+
+const form =
+document.getElementById('taskForm');
+
+if(form){
+
+form.addEventListener('submit', e => {
+
+  e.preventDefault();
+
+  db.ref('Tasks').push({
+
+    title:
+    document.getElementById('taskTitle').value,
+
+    description:
+    document.getElementById('taskDescription').value,
+
+    assignedTo:
+    document.getElementById('taskAssigned').value,
+
+    priority:
+    document.getElementById('taskPriority').value,
+
+    dueDate:
+    document.getElementById('taskDueDate').value,
+
+    status:'Open',
+
+    timestamp:Date.now()
+
+  });
+
+  form.reset();
+
+});
+
+}
+
+},1000);
+
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+  <script>
+    // ---- Firebase (unchanged from the original console — same live database) ----
+    const firebaseConfig = {
+      databaseURL: "https://bgte1973-default-rtdb.asia-southeast1.firebasedatabase.app"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    // ---- Tab navigation ----
+    const tags = document.querySelectorAll('.tag');
+    const panels = document.querySelectorAll('.panel');
+    function activate(target){
+      tags.forEach(t => t.classList.toggle('active', t.dataset.target === target));
+      panels.forEach(p => p.classList.toggle('active', p.id === target));
+    }
+    tags.forEach(tag => {
+      tag.addEventListener('click', () => activate(tag.dataset.target));
+      tag.addEventListener('keydown', e => { if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); activate(tag.dataset.target); } });
+    });
+
+    function escapeHtml(str){
+      const div = document.createElement('div');
+      div.textContent = str === undefined || str === null ? '' : String(str);
+      return div.innerHTML;
+    }
+
+    // ================= LOADS =================
+    let loadsCache = {};
+
+    function computeTotal(load){
+      const rate = parseFloat(load.Financials && load.Financials.rate) || 0;
+      const fuel = parseFloat(load.Financials && load.Financials.fuelSurcharge) || 0;
+      return rate + fuel;
+    }
+
+    function renderLoads(){
+      const boardBody = document.getElementById('loadBoardBody');
+      const historyBody = document.getElementById('loadHistoryBody');
+      const entries = Object.keys(loadsCache).map(key => ({ id: key, ...loadsCache[key] }))
+        .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+
+      // Board (all loads, quick + full)
+      if(entries.length === 0){
+        boardBody.innerHTML = '<tr><td colspan="5" class="empty-note">No loads posted yet — use Quick Load Entry above or the New Load tab.</td></tr>';
+      } else {
+        boardBody.innerHTML = entries.map(l => {
+          const routeText = l.routeDetails || ((l.origin || '—') + ' → ' + (l.destination || '—') + (l.freight ? ' · ' + l.freight : ''));
+          const status = l.status || 'Active';
+          const statusClass = status === 'Delivered' ? 'delivered' : 'active';
+          const total = computeTotal(l);
+          return '<tr>' +
+            '<td data-label="Route">' + escapeHtml(routeText) + (l.customer ? '<br><span style="color:var(--chrome); font-size:11px;">' + escapeHtml(l.customer) + '</span>' : '') + '</td>' +
+            '<td data-label="Weight">' + (l.weight ? escapeHtml(l.weight) + ' lbs' : '—') + '</td>' +
+            '<td data-label="Rate">' + (total > 0 ? '$' + total.toFixed(2) : '—') + '</td>' +
+            '<td data-label="Status"><span class="status ' + statusClass + '">' + escapeHtml(status) + '</span></td>' +
+            '<td data-label="">' + (status !== 'Delivered' ? '<button class="mini-btn" data-deliver="' + l.id + '">Mark Delivered</button>' : '') + '</td>' +
+            '</tr>';
+        }).join('');
+        boardBody.querySelectorAll('[data-deliver]').forEach(btn => {
+          btn.addEventListener('click', () => {
+            db.ref('Quotes_and_Loads/' + btn.dataset.deliver).update({ status: 'Delivered' });
+          });
+        });
+      }
+
+      // History (full loads only — has Financials)
+      const fullLoads = entries.filter(l => l.Financials);
+      if(fullLoads.length === 0){
+        historyBody.innerHTML = '<tr><td colspan="9" class="empty-note">No full loads logged yet.</td></tr>';
+      } else {
+        historyBody.innerHTML = fullLoads.map(l => {
+          const status = l.status || 'Active';
+          const statusClass = status === 'Delivered' ? 'delivered' : 'active';
+          const total = computeTotal(l);
+          return '<tr>' +
+            '<td data-label="Route">' + escapeHtml((l.origin || '—') + ' → ' + (l.destination || '—')) + '</td>' +
+            '<td data-label="Customer">' + escapeHtml(l.customer || '—') + '</td>' +
+            '<td data-label="Freight">' + escapeHtml(l.freight || '—') + '</td>' +
+            '<td data-label="Weight">' + (l.weight ? escapeHtml(l.weight) + ' lbs' : '—') + '</td>' +
+            '<td data-label="Rate">$' + (parseFloat(l.Financials.rate) || 0).toFixed(2) + '</td>' +
+            '<td data-label="Fuel">$' + (parseFloat(l.Financials.fuelSurcharge) || 0).toFixed(2) + '</td>' +
+            '<td data-label="Total" style="color:var(--diesel); font-weight:700;">$' + total.toFixed(2) + '</td>' +
+            '<td data-label="Status"><span class="status ' + statusClass + '">' + escapeHtml(status) + '</span></td>' +
+            '<td data-label="">' + (status !== 'Delivered' ? '<button class="mini-btn" data-deliver="' + l.id + '">Mark Delivered</button>' : '') + '</td>' +
+            '</tr>';
+        }).join('');
+        historyBody.querySelectorAll('[data-deliver]').forEach(btn => {
+          btn.addEventListener('click', () => {
+            db.ref('Quotes_and_Loads/' + btn.dataset.deliver).update({ status: 'Delivered' });
+          });
+        });
+      }
+
+      // KPIs
+      const activeCount = entries.filter(l => (l.status || 'Active') !== 'Delivered').length;
+      const totalRevenue = entries.reduce((sum, l) => sum + computeTotal(l), 0);
+      document.getElementById('kpiActive').textContent = activeCount;
+      document.getElementById('kpiRevenue').textContent = totalRevenue.toFixed(2);
+
+      renderCustomers(entries);
+    }
+
+    db.ref('Quotes_and_Loads').on('value', snapshot => {
+      loadsCache = snapshot.val() || {};
+      renderLoads();
+    });
+
+    document.getElementById('quickLoadBtn').addEventListener('click', () => {
+      const input = document.getElementById('quickLoadInput');
+      const customerInput = document.getElementById('quickLoadCustomer');
+      const route = input.value.trim();
+      if(!route) return;
+      db.ref('Quotes_and_Loads').push({
+        routeDetails: route,
+        customer: customerInput.value.trim(),
+        type: 'QuickEntry',
+        status: 'Active',
+        timestamp: Date.now()
+      });
+      input.value = '';
+      customerInput.value = '';
+      const confirmMsg = document.getElementById('quickLoadConfirm');
+      confirmMsg.textContent = '✓ Posted to board';
+      confirmMsg.classList.add('show');
+      setTimeout(() => confirmMsg.classList.remove('show'), 2500);
+    });
+
+    document.getElementById('fullLoadForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const loadRef = db.ref('Quotes_and_Loads').push();
+      loadRef.set({
+        origin: document.getElementById('loadOrigin').value.trim(),
+        destination: document.getElementById('loadDest').value.trim(),
+        customer: document.getElementById('loadCustomer').value.trim(),
+        freight: document.getElementById('freightDesc').value.trim(),
+        weight: document.getElementById('freightWeight').value,
+        status: 'Active',
+        timestamp: Date.now(),
+        Financials: {
+          rate: document.getElementById('loadRate').value || '0',
+          fuelSurcharge: document.getElementById('fuelSurcharge').value || '0'
+        }
+      });
+      ['loadOrigin', 'loadDest', 'loadCustomer', 'freightDesc', 'freightWeight', 'loadRate', 'fuelSurcharge'].forEach(id => document.getElementById(id).value = '');
+      const confirmMsg = document.getElementById('fullLoadConfirm');
+      confirmMsg.textContent = '✓ Load & financials saved';
+      confirmMsg.classList.add('show');
+      setTimeout(() => confirmMsg.classList.remove('show'), 2500);
+    });
+
+    // ================= FLEET =================
+    function renderFleet(fleetData){
+      const body = document.getElementById('fleetBody');
+      const entries = Object.values(fleetData || {}).sort((a, b) => (b.lastUpdated || 0) - (a.lastUpdated || 0));
+      const unitCount = entries.length;
+      document.getElementById('kpiUnits').textContent = unitCount;
+      if(entries.length === 0){
+        body.innerHTML = '<tr><td colspan="4" class="empty-note">No fleet records yet.</td></tr>';
+        return;
+      }
+      body.innerHTML = entries.map(u => {
+        const commsClass = u.starlinkStatus === 'Active' ? 'verified' : 'offline';
+        const commsLabel = u.starlinkStatus === 'Active' ? 'Starlink Active' : 'Offline';
+        return '<tr>' +
+          '<td data-label="Unit">' + escapeHtml(u.unitId || '—') + '</td>' +
+          '<td data-label="GVWR">' + (u.gvwr ? escapeHtml(u.gvwr) + ' lbs' : '—') + '</td>' +
+          '<td data-label="Tires">' + escapeHtml(u.tires || '—') + '</td>' +
+          '<td data-label="Comms"><span class="status ' + commsClass + '">' + commsLabel + '</span></td>' +
+          '</tr>';
+      }).join('');
+    }
+
+    db.ref('Fleet_and_Assets').on('value', snapshot => {
+      renderFleet(snapshot.val());
+    });
+
+    document.getElementById('fleetForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      db.ref('Fleet_and_Assets').push({
+        unitId: document.getElementById('unitId').value.trim(),
+        gvwr: document.getElementById('gvwr').value,
+        tires: document.getElementById('tireSpecs').value,
+        starlinkStatus: document.getElementById('starlinkStatus').value,
+        lastUpdated: Date.now()
+      });
+      document.getElementById('unitId').value = '';
+      document.getElementById('gvwr').value = '';
+      const confirmMsg = document.getElementById('fleetConfirm');
+      confirmMsg.textContent = '✓ Fleet record updated';
+      confirmMsg.classList.add('show');
+      setTimeout(() => confirmMsg.classList.remove('show'), 2500);
+    });
+
+    // ================= COMPLIANCE =================
+    function renderCompliance(complianceData){
+      const body = document.getElementById('complianceBody');
+      const entries = Object.values(complianceData || {}).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+      const totalMiles = entries.reduce((sum, c) => sum + (parseFloat(c.iftaMiles) || 0), 0);
+      document.getElementById('kpiMiles').textContent = totalMiles.toLocaleString();
+      if(entries.length === 0){
+        body.innerHTML = '<tr><td colspan="5" class="empty-note">No compliance entries yet.</td></tr>';
+        return;
+      }
+      body.innerHTML = entries.map(c => {
+        const miles = parseFloat(c.iftaMiles) || 0;
+        const gallons = parseFloat(c.iftaGallons) || 0;
+        const mpg = gallons > 0 ? (miles / gallons).toFixed(1) : '—';
+        const statusClass = c.securementCheck === 'Verified' ? 'verified' : 'pending';
+        return '<tr>' +
+          '<td data-label="Miles">' + miles.toLocaleString() + '</td>' +
+          '<td data-label="Gallons">' + gallons.toFixed(2) + '</td>' +
+          '<td data-label="MPG">' + mpg + '</td>' +
+          '<td data-label="BOL #">' + escapeHtml(c.bolTicket || '—') + '</td>' +
+          '<td data-label="Securement"><span class="status ' + statusClass + '">' + escapeHtml(c.securementCheck || 'Pending') + '</span></td>' +
+          '</tr>';
+      }).join('');
+    }
+
+    db.ref('Compliance_and_Tracking').on('value', snapshot => {
+      renderCompliance(snapshot.val());
+    });
+
+    document.getElementById('complianceForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      db.ref('Compliance_and_Tracking').push({
+        iftaMiles: document.getElementById('iftaMiles').value,
+        iftaGallons: document.getElementById('iftaGallons').value,
+        bolTicket: document.getElementById('bolTicket').value.trim(),
+        securementCheck: document.getElementById('securementCheck').value,
+        timestamp: Date.now()
+      });
+      ['iftaMiles', 'iftaGallons', 'bolTicket'].forEach(id => document.getElementById(id).value = '');
+      const confirmMsg = document.getElementById('complianceConfirm');
+      confirmMsg.textContent = '✓ Compliance data logged';
+      confirmMsg.classList.add('show');
+      setTimeout(() => confirmMsg.classList.remove('show'), 2500);
+    });
+
+    // ================= CUSTOMERS (auto-built from loads) =================
+    function renderCustomers(entries){
+      const body = document.getElementById('customersBody');
+      if(!body) return;
+      const withCustomer = (entries || []).filter(l => l.customer && l.customer.trim());
+      if(withCustomer.length === 0){
+        body.innerHTML = '<tr><td colspan="5" class="empty-note">No customers yet — dispatch a load with a customer/broker name to see them here.</td></tr>';
+        return;
+      }
+      const map = {};
+      withCustomer.forEach(l => {
+        const key = l.customer.trim();
+        if(!map[key]) map[key] = { loads: 0, revenue: 0, lastTimestamp: 0, lastRoute: '' };
+        map[key].loads += 1;
+        map[key].revenue += computeTotal(l);
+        const ts = l.timestamp || 0;
+        if(ts >= map[key].lastTimestamp){
+          map[key].lastTimestamp = ts;
+          map[key].lastRoute = l.routeDetails || ((l.origin || '—') + ' → ' + (l.destination || '—'));
+        }
+      });
+      const rows = Object.keys(map).sort((a, b) => map[b].revenue - map[a].revenue).map(name => {
+        const c = map[name];
+        const lastDate = c.lastTimestamp ? new Date(c.lastTimestamp).toLocaleDateString() : '—';
+        return '<tr>' +
+          '<td data-label="Customer">' + escapeHtml(name) + '</td>' +
+          '<td data-label="Loads">' + c.loads + '</td>' +
+          '<td data-label="Revenue" style="color:var(--diesel); font-weight:700;">$' + c.revenue.toFixed(2) + '</td>' +
+          '<td data-label="Last Load">' + lastDate + '</td>' +
+          '<td data-label="Last Route">' + escapeHtml(c.lastRoute) + '</td>' +
+          '</tr>';
+      });
+      body.innerHTML = rows.join('');
+    }
+
+    // ================= ADMIN: COMPANY INFO =================
+    db.ref('Settings/company').on('value', snapshot => {
+      const data = snapshot.val() || {};
+      if(document.activeElement && document.activeElement.closest('#companyForm')) return; // don't clobber while typing
+      document.getElementById('companyName').value = data.name || '';
+      document.getElementById('companyPhone').value = data.phone || '';
+      document.getElementById('companyDot').value = data.dot || '';
+      document.getElementById('companyMc').value = data.mc || '';
+      document.getElementById('companyAddress').value = data.address || '';
+    });
+
+    document.getElementById('companyForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      db.ref('Settings/company').set({
+        name: document.getElementById('companyName').value.trim(),
+        phone: document.getElementById('companyPhone').value.trim(),
+        dot: document.getElementById('companyDot').value.trim(),
+        mc: document.getElementById('companyMc').value.trim(),
+        address: document.getElementById('companyAddress').value.trim()
+      });
+      const confirmMsg = document.getElementById('companyConfirm');
+      confirmMsg.textContent = '✓ Saved';
+      confirmMsg.classList.add('show');
+      setTimeout(() => confirmMsg.classList.remove('show'), 2500);
+    });
+
+    // ================= ADMIN: DRIVER ROSTER =================
+    function renderDrivers(driverData){
+      const body = document.getElementById('driversBody');
+      const entries = Object.values(driverData || {}).sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+      if(entries.length === 0){
+        body.innerHTML = '<tr><td colspan="4" class="empty-note">No drivers on file yet.</td></tr>';
+        return;
+      }
+      body.innerHTML = entries.map(d => {
+        const statusClass = d.status === 'Active' ? 'verified' : 'offline';
+        return '<tr>' +
+          '<td data-label="Driver">' + escapeHtml(d.name || '—') + '</td>' +
+          '<td data-label="CDL">' + escapeHtml(d.cdl || '—') + '</td>' +
+          '<td data-label="Phone">' + escapeHtml(d.phone || '—') + '</td>' +
+          '<td data-label="Status"><span class="status ' + statusClass + '">' + escapeHtml(d.status || 'Active') + '</span></td>' +
+          '</tr>';
+      }).join('');
+    }
+
+    db.ref('Drivers').on('value', snapshot => {
+      renderDrivers(snapshot.val());
+    });
+
+    document.getElementById('driverForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      db.ref('Drivers').push({
+        name: document.getElementById('driverName').value.trim(),
+        cdl: document.getElementById('driverCdl').value.trim(),
+        phone: document.getElementById('driverPhone').value.trim(),
+        status: document.getElementById('driverStatus').value
+      });
+      document.getElementById('driverForm').reset();
+      const confirmMsg = document.getElementById('driverConfirm');
+      confirmMsg.textContent = '✓ Driver added';
+      confirmMsg.classList.add('show');
+      setTimeout(() => confirmMsg.classList.remove('show'), 2500);
+    });
+
+    // ================= ADMIN: BACKUP & EXPORT =================
+    document.getElementById('exportBackupBtn').addEventListener('click', async () => {
+      const backup = { exportedAt: new Date().toISOString(), source: 'Big Sarge Dispatch Console' };
+      const paths = ['Quotes_and_Loads', 'Fleet_and_Assets', 'Compliance_and_Tracking', 'Drivers', 'Settings'];
+      for(const path of paths){
+        try{
+          const snap = await db.ref(path).once('value');
+          backup[path] = snap.val() || null;
+        } catch(err){
+          backup[path] = null;
+        }
+      }
+      const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'big-sarge-backup-' + new Date().toISOString().slice(0,10) + '.json';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      const confirmMsg = document.getElementById('backupConfirm');
+      confirmMsg.textContent = '✓ Backup downloaded';
+      confirmMsg.classList.add('show');
+      setTimeout(() => confirmMsg.classList.remove('show'), 2500);
+    });
+  </script>
+</body>
+</html>
