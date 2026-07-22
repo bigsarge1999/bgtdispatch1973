@@ -1,0 +1,3255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Hog's Den — Harley Parts Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Caveat:wght@600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --asphalt: #1c1b19;
+    --asphalt-2: #262420;
+    --leather: #5b3324;
+    --rust: #c1591e;
+    --rust-dim: #8a4118;
+    --chrome: #b8b2a7;
+    --paper: #ede6d6;
+    --amber: #e8a33d;
+    --oil-green: #4f6b52;
+    --line: rgba(184,178,167,0.18);
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    background: var(--asphalt);
+    background-image:
+      radial-gradient(circle at 20% 10%, rgba(184,178,167,0.04), transparent 40%),
+      repeating-linear-gradient(45deg, rgba(255,255,255,0.012) 0px, rgba(255,255,255,0.012) 1px, transparent 1px, transparent 8px);
+    color: var(--paper);
+    font-family: 'JetBrains Mono', monospace;
+    min-height: 100vh;
+    padding: 28px 20px 60px;
+  }
+
+  /* ---------- Header / shop sign ---------- */
+  .signboard{
+    max-width: 1080px;
+    margin: 0 auto 34px;
+    background: linear-gradient(180deg, var(--asphalt-2), var(--asphalt));
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 26px 30px;
+    position: relative;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.03);
+  }
+  .signboard::before, .signboard::after,
+  .signboard .rivet-tl, .signboard .rivet-br{
+    content:'';
+    position:absolute;
+    width:9px; height:9px;
+    border-radius:50%;
+    background: radial-gradient(circle at 35% 35%, #d8d2c6, #6f6a60 70%);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.6);
+  }
+  .signboard::before{ top:12px; left:12px; }
+  .signboard::after{ top:12px; right:12px; }
+  .signboard .rivet-tl{ bottom:12px; left:12px; }
+  .signboard .rivet-br{ bottom:12px; right:12px; }
+
+  .signboard .eyebrow{
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--rust);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .signboard h1{
+    font-family:'Oswald', sans-serif;
+    font-weight: 700;
+    font-size: clamp(32px, 5vw, 52px);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--paper);
+    line-height: 1;
+  }
+  .signboard h1 span{ color: var(--rust); }
+  .signboard .tagline{
+    margin-top: 8px;
+    color: var(--chrome);
+    font-size: 13px;
+    letter-spacing: 0.5px;
+  }
+  .signboard .est{
+    position:absolute;
+    right: 30px;
+    bottom: 22px;
+    font-family:'Oswald', sans-serif;
+    font-size: 12px;
+    color: var(--chrome);
+    letter-spacing: 2px;
+    opacity: 0.7;
+  }
+
+  /* ---------- Hanging tag nav ---------- */
+  nav.tags{
+    max-width: 1080px;
+    margin: 0 auto 30px;
+    display: flex;
+    gap: 26px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .tag-wrap{
+    display:flex;
+    flex-direction: column;
+    align-items:center;
+  }
+  .string{
+    width:1px;
+    height:16px;
+    background: repeating-linear-gradient(180deg, var(--chrome) 0 3px, transparent 3px 6px);
+    opacity:0.5;
+  }
+  .tag{
+    position: relative;
+    background: var(--leather);
+    border: 1px solid rgba(0,0,0,0.3);
+    color: var(--paper);
+    font-family:'Oswald', sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 12px 22px 12px 26px;
+    cursor: pointer;
+    clip-path: polygon(12% 0, 100% 0, 100% 100%, 12% 100%, 0 50%);
+    transition: transform 0.15s ease, background 0.2s ease;
+    box-shadow: 0 6px 14px rgba(0,0,0,0.35);
+  }
+  .tag .hole{
+    position:absolute;
+    left: 14px; top: 50%;
+    width:5px; height:5px;
+    border-radius:50%;
+    background: var(--asphalt);
+    transform: translateY(-50%);
+    box-shadow: inset 0 1px 1px rgba(0,0,0,0.6);
+  }
+  .tag:hover{ transform: translateY(-2px) rotate(-1deg); }
+  .tag.active{
+    background: var(--rust);
+    color: var(--asphalt);
+  }
+
+  main{ max-width: 1080px; margin: 0 auto; }
+  .panel{ display:none; animation: fadeIn 0.35s ease; }
+  .panel.active{ display:block; }
+  @keyframes fadeIn{ from{opacity:0; transform: translateY(6px);} to{opacity:1; transform:none;} }
+
+  .board{
+    background: var(--asphalt-2);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 22px 24px;
+  }
+  .board h2{
+    font-family:'Oswald', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-size: 20px;
+    color: var(--paper);
+    margin-bottom: 4px;
+  }
+  .board .sub{
+    font-size: 12px;
+    color: var(--chrome);
+    margin-bottom: 18px;
+  }
+
+  table{ width:100%; border-collapse: collapse; font-size: 13px; }
+  th{
+    text-align:left;
+    font-family:'Oswald', sans-serif;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    font-size: 11px;
+    color: var(--chrome);
+    border-bottom: 1px solid var(--line);
+    padding: 8px 10px;
+  }
+  td{
+    padding: 12px 10px;
+    border-bottom: 1px solid var(--line);
+    color: var(--paper);
+  }
+  tr:last-child td{ border-bottom: none; }
+  tr:hover td{ background: rgba(255,255,255,0.02); }
+
+  .status{
+    display:inline-block;
+    padding: 3px 9px;
+    border-radius: 3px;
+    font-size: 11px;
+    letter-spacing: 0.5px;
+    font-weight: 500;
+  }
+  .status.wait{ background: rgba(232,163,61,0.15); color: var(--amber); border:1px solid rgba(232,163,61,0.4); }
+  .status.progress{ background: rgba(193,89,30,0.15); color: var(--rust); border:1px solid rgba(193,89,30,0.4); }
+  .status.ready{ background: rgba(79,107,82,0.2); color: #8fb593; border:1px solid rgba(143,181,147,0.4); }
+  .status.diag{ background: rgba(184,178,167,0.12); color: var(--chrome); border:1px solid var(--line); }
+
+  .qty-low{ color: var(--amber); font-weight: 700; }
+  .qty-low::after{ content:' ⚠ LOW'; font-size: 10px; letter-spacing: 1px; }
+
+  /* stat cards */
+  .stats{
+    display:grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px,1fr));
+    gap: 14px;
+    margin-bottom: 22px;
+  }
+  .stat{
+    background: var(--asphalt);
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    padding: 16px 18px;
+    position: relative;
+    overflow:hidden;
+  }
+  .stat .label{
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--chrome);
+    margin-bottom: 6px;
+  }
+  .stat .num{
+    font-family:'Caveat', cursive;
+    font-size: 40px;
+    color: var(--amber);
+    line-height: 1;
+  }
+  .stat .num small{ font-size: 18px; opacity: 0.7; }
+
+  .board-sep{ margin: 26px 0; border:none; border-top: 1px dashed var(--line); }
+
+  /* ---------- Parts catalog bins ---------- */
+  .catalog{
+    display:grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+  .bin{
+    background: var(--asphalt);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 0;
+    align-self: start;
+  }
+  .bin summary{
+    list-style: none;
+    cursor: pointer;
+    display:flex;
+    align-items:center;
+    gap: 10px;
+    padding: 12px 14px;
+    font-family: 'Oswald', sans-serif;
+    font-weight: 600;
+    font-size: 13px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: var(--paper);
+    position: relative;
+  }
+  .bin summary::-webkit-details-marker{ display:none; }
+  .bin summary::after{
+    content: '+';
+    margin-left: auto;
+    color: var(--rust);
+    font-size: 16px;
+    font-family: 'JetBrains Mono', monospace;
+    transition: transform 0.2s ease;
+  }
+  .bin[open] summary::after{ content: '−'; }
+  .bin-hole{
+    width:6px; height:6px; border-radius:50%;
+    background: var(--rust-dim);
+    flex-shrink:0;
+  }
+  .bin[open]{ border-color: rgba(193,89,30,0.35); }
+  .bin[open] .bin-hole{ background: var(--rust); }
+  .bin ul{
+    list-style: none;
+    padding: 0 14px 14px 30px;
+    display:flex;
+    flex-direction:column;
+    gap: 6px;
+  }
+  .bin li{
+    font-size: 12.5px;
+    color: var(--chrome);
+    position: relative;
+  }
+  .bin li::before{
+    content: '—';
+    position: absolute;
+    left: -16px;
+    color: var(--rust-dim);
+  }
+
+  .admin-list{ display:flex; flex-direction:column; gap:10px; }
+  .admin-row{
+    display:flex; justify-content:space-between; align-items:center;
+    padding: 12px 14px;
+    background: var(--asphalt);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+  }
+  .admin-row .role{ color: var(--chrome); font-size: 11px; letter-spacing:1px; text-transform:uppercase; }
+  .toggle{
+    width: 36px; height: 18px;
+    background: var(--rust);
+    border-radius: 10px;
+    position: relative;
+  }
+  .toggle::after{
+    content:''; position:absolute; top:2px; right:2px;
+    width:14px; height:14px; border-radius:50%;
+    background: var(--paper);
+  }
+
+  /* ---------- Sales channels ---------- */
+  .channels{
+    display:flex;
+    flex-direction:column;
+    gap: 8px;
+  }
+  .channel{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    background: var(--asphalt);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 10px 14px;
+    font-size: 13px;
+    color: var(--paper);
+  }
+  .channel em{
+    color: var(--chrome);
+    font-style: normal;
+    font-size: 11px;
+    margin-left: 4px;
+  }
+  .channel-dot{
+    width:7px; height:7px; border-radius:50%;
+    flex-shrink:0;
+  }
+  .channel-dot.live{ background: #8fb593; box-shadow: 0 0 6px rgba(143,181,147,0.6); }
+  .channel-dot.soon{ background: var(--amber); }
+  .ebay-status{ margin-top: 12px; display:flex; flex-direction:column; gap:8px; }
+  .rating-placeholder{ color: var(--chrome); font-size: 12px; font-style: italic; }
+
+  /* ---------- Admin promise grid ---------- */
+  .promise-grid{
+    display:grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 10px;
+  }
+  .promise{
+    background: var(--asphalt);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--rust);
+    border-radius: 3px;
+    padding: 10px 14px;
+    font-size: 12.5px;
+    color: var(--paper);
+  }
+
+  /* ---------- Legal policy block ---------- */
+  .legal-block{
+    background: var(--asphalt);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 16px 18px;
+    display:flex;
+    flex-direction:column;
+    gap: 10px;
+  }
+  .legal-block p{
+    font-size: 12px;
+    line-height: 1.6;
+    color: var(--chrome);
+  }
+  .legal-block strong{ color: var(--paper); }
+  .legal-block .legal-note{
+    margin-top: 4px;
+    padding-top: 10px;
+    border-top: 1px dashed var(--line);
+    font-style: italic;
+    color: var(--amber);
+    opacity: 0.85;
+    font-size: 11px;
+  }
+
+  /* ---------- Add Part intake form ---------- */
+  .intake-form{
+    display:flex;
+    flex-direction:column;
+    gap: 14px;
+    background: var(--asphalt);
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    padding: 20px;
+    margin-bottom: 8px;
+  }
+  .form-row{ display:flex; flex-direction:column; gap:6px; }
+  .form-row label{
+    font-family:'Oswald', sans-serif;
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--chrome);
+  }
+  .form-row input,
+  .form-row select,
+  .form-row textarea{
+    background: var(--asphalt-2);
+    border: 1px solid var(--line);
+    color: var(--paper);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    padding: 9px 11px;
+    border-radius: 4px;
+    outline: none;
+  }
+  .form-row input:focus,
+  .form-row select:focus,
+  .form-row textarea:focus{ border-color: var(--rust); }
+  .form-row textarea{ resize: vertical; }
+  .form-grid{
+    display:grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 14px;
+  }
+  .computed-price{
+    background: var(--asphalt-2);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 9px 11px;
+    color: var(--amber);
+    font-weight: 700;
+    font-size: 14px;
+  }
+  .form-actions{
+    display:flex;
+    align-items:center;
+    gap: 14px;
+    margin-top: 4px;
+  }
+  .submit-btn{
+    background: var(--rust);
+    color: var(--asphalt);
+    border: none;
+    font-family: 'Oswald', sans-serif;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    font-size: 13px;
+    padding: 11px 22px;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  .submit-btn:hover{ background: #d9682a; }
+  .confirm-msg{
+    font-size: 12px;
+    color: #8fb593;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  .confirm-msg.show{ opacity: 1; }
+  .form-sep{ border:none; border-top: 1px dashed var(--line); margin: 4px 0; }
+  .form-section-label{
+    font-family:'Oswald', sans-serif;
+    font-size: 12px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--rust);
+  }
+  .photo-preview{
+    margin-top: 8px;
+    max-width: 160px;
+    max-height: 160px;
+    border-radius: 4px;
+    border: 1px solid var(--line);
+    object-fit: cover;
+  }
+  .hint{ font-size: 10.5px; color: var(--chrome); opacity: 0.8; }
+  .thumb{
+    width: 34px; height: 34px;
+    border-radius: 3px;
+    object-fit: cover;
+    border: 1px solid var(--line);
+    display:block;
+  }
+  .thumb-placeholder{
+    width: 34px; height: 34px;
+    border-radius: 3px;
+    border: 1px dashed var(--line);
+    display:flex; align-items:center; justify-content:center;
+    color: var(--chrome); font-size: 10px;
+  }
+  .photo-count-badge{
+    position: absolute;
+    bottom: -4px; right: -4px;
+    background: var(--rust);
+    color: var(--asphalt);
+    font-size: 9px;
+    font-weight: 700;
+    border-radius: 8px;
+    padding: 1px 5px;
+    line-height: 1.3;
+  }
+
+  /* ---------- Low-stock alerts ---------- */
+  .alerts-box{ display:flex; flex-direction:column; gap:8px; }
+  .alert-empty{ font-size: 12px; color: var(--chrome); font-style: italic; }
+  .alert-row{
+    display:flex; justify-content:space-between; align-items:center;
+    background: rgba(232,163,61,0.08);
+    border: 1px solid rgba(232,163,61,0.35);
+    border-radius: 4px;
+    padding: 10px 14px;
+    font-size: 12.5px;
+  }
+  .alert-row .alert-qty{ color: var(--amber); font-weight:700; }
+
+  /* ---------- Fitment lookup ---------- */
+  .fitment-bar{
+    display:flex; gap:10px; flex-wrap:wrap; margin-bottom: 14px;
+  }
+  .fitment-bar input{
+    background: var(--asphalt);
+    border: 1px solid var(--line);
+    color: var(--paper);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    padding: 9px 11px;
+    border-radius: 4px;
+    flex: 1;
+    min-width: 140px;
+  }
+  .fitment-bar button{
+    background: var(--rust);
+    color: var(--asphalt);
+    border: none;
+    font-family:'Oswald', sans-serif;
+    font-weight:600;
+    letter-spacing:0.5px;
+    text-transform:uppercase;
+    font-size: 11px;
+    padding: 9px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  .fitment-bar button#fitClearBtn{
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--chrome);
+  }
+  .fitment-results{ display:flex; flex-direction:column; gap:8px; }
+  .fitment-result{
+    background: var(--asphalt);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--rust);
+    border-radius: 3px;
+    padding: 10px 14px;
+    font-size: 12.5px;
+  }
+  .fitment-result .fr-name{ color: var(--paper); font-weight: 600; }
+  .fitment-result .fr-meta{ color: var(--chrome); font-size: 11px; margin-top: 3px; }
+  .fitment-none{ color: var(--chrome); font-style: italic; font-size: 12px; }
+
+  /* ---------- Export button ---------- */
+  .export-btn{
+    background: transparent;
+    border: 1px solid var(--rust);
+    color: var(--rust);
+    font-family:'Oswald', sans-serif;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    font-size: 11px;
+    padding: 8px 14px;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  .export-btn:hover{ background: rgba(193,89,30,0.12); }
+
+  /* ---------- Parts search ---------- */
+  .search-bar{
+    display:flex;
+    align-items:center;
+    gap: 10px;
+    background: var(--asphalt);
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    padding: 10px 14px;
+    margin-bottom: 16px;
+  }
+  .search-icon{
+    color: var(--rust);
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+  .search-bar input{
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: var(--paper);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    outline: none;
+  }
+  .search-bar input::placeholder{ color: rgba(184,178,167,0.45); }
+  .search-count{
+    font-size: 11px;
+    letter-spacing: 0.5px;
+    color: var(--chrome);
+    white-space: nowrap;
+  }
+  .bin li mark, .bin summary mark{
+    background: var(--rust);
+    color: var(--asphalt);
+    padding: 0 2px;
+    border-radius: 2px;
+  }
+  .bin.no-match{ display:none; }
+  .bin li.no-match{ display:none; }
+
+  /* ---------- Cost & markup pricing ---------- */
+  .markup-toolbar{
+    display:flex;
+    align-items:center;
+    gap: 10px;
+    background: var(--asphalt);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 10px 14px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+    font-size: 12px;
+  }
+  .markup-toolbar label{ color: var(--chrome); letter-spacing: 0.5px; }
+  .markup-toolbar input[type="number"]{
+    width: 60px;
+    background: var(--asphalt-2);
+    border: 1px solid var(--line);
+    color: var(--amber);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    padding: 5px 8px;
+    border-radius: 3px;
+  }
+  .markup-toolbar button{
+    background: var(--rust);
+    color: var(--asphalt);
+    border: none;
+    font-family: 'Oswald', sans-serif;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    font-size: 11px;
+    padding: 7px 14px;
+    border-radius: 3px;
+    cursor: pointer;
+  }
+  .markup-toolbar button:hover{ background: #d9682a; }
+
+  table.pricing-table .cost-input,
+  table.pricing-table .markup-input{
+    width: 64px;
+    background: var(--asphalt-2);
+    border: 1px solid var(--line);
+    color: var(--paper);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12.5px;
+    padding: 4px 6px;
+    border-radius: 3px;
+  }
+  table.pricing-table .dollar,
+  table.pricing-table .pct{
+    color: var(--chrome);
+    font-size: 11px;
+    margin: 0 3px;
+  }
+  table.pricing-table .list-price{
+    color: var(--amber);
+    font-weight: 700;
+    font-size: 14px;
+  }
+
+  /* ---------- Startup checklist ---------- */
+  .checklist-progress{
+    display:flex;
+    align-items:center;
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+  .checklist-progress-bar{
+    flex: 1;
+    height: 8px;
+    background: var(--asphalt);
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    overflow: hidden;
+  }
+  .checklist-progress-fill{
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, var(--rust-dim), var(--rust));
+    transition: width 0.3s ease;
+  }
+  .checklist-pct{
+    font-size: 11px;
+    letter-spacing: 0.5px;
+    color: var(--chrome);
+    white-space: nowrap;
+  }
+  .checklist-groups{
+    display:grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 16px;
+  }
+  .checklist-group{
+    background: var(--asphalt);
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    padding: 14px 16px;
+  }
+  .checklist-group-title{
+    font-family: 'Oswald', sans-serif;
+    font-weight: 600;
+    font-size: 12px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--rust);
+    margin-bottom: 10px;
+  }
+  .check-row{
+    display:flex;
+    align-items:flex-start;
+    gap: 9px;
+    padding: 6px 0;
+    font-size: 12.5px;
+    color: var(--paper);
+    cursor: pointer;
+  }
+  .check-row input[type="checkbox"]{
+    margin-top: 2px;
+    accent-color: var(--rust);
+    width: 14px; height: 14px;
+    flex-shrink: 0;
+    cursor: pointer;
+  }
+  .check-row input[type="checkbox"]:checked + span{
+    color: var(--chrome);
+    text-decoration: line-through;
+    text-decoration-color: var(--rust-dim);
+  }
+
+  /* ---------- Bulk import ---------- */
+  .bulk-import-box{
+    background: var(--asphalt);
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    padding: 16px;
+  }
+  .bulk-import-row{
+    display:flex;
+    align-items:center;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+  .bulk-file-label{
+    display:inline-block;
+    cursor: pointer;
+  }
+
+  .photo-preview-grid{
+    display:flex;
+    flex-wrap:wrap;
+    gap: 8px;
+    margin-top: 8px;
+  }
+  .photo-thumb-wrap{
+    position: relative;
+    width: 64px;
+    height: 64px;
+  }
+  .photo-thumb-wrap img{
+    width: 100%; height: 100%;
+    object-fit: cover;
+    border-radius: 4px;
+    border: 1px solid var(--line);
+  }
+  .photo-thumb-remove{
+    position:absolute;
+    top: -6px; right: -6px;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: var(--rust);
+    color: var(--asphalt);
+    border: none;
+    font-size: 11px;
+    line-height: 18px;
+    text-align:center;
+    cursor: pointer;
+    padding: 0;
+  }
+  .listing-desc-box{
+    background: var(--asphalt);
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    padding: 14px 16px;
+    margin-top: 4px;
+  }
+  .listing-desc-box textarea{
+    width: 100%;
+    background: var(--asphalt-2);
+    border: 1px solid var(--line);
+    color: var(--paper);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12.5px;
+    line-height: 1.6;
+    padding: 12px;
+    border-radius: 4px;
+    resize: vertical;
+  }
+
+  /* ---------- Bin labels ---------- */
+  .label-picker-list{
+    display:flex;
+    flex-direction:column;
+    gap: 6px;
+    max-height: 280px;
+    overflow-y: auto;
+    background: var(--asphalt);
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    padding: 10px 14px;
+  }
+  .label-picker-row{
+    display:flex;
+    align-items:center;
+    gap: 10px;
+    padding: 5px 0;
+    font-size: 12.5px;
+    color: var(--paper);
+    cursor: pointer;
+  }
+  .label-picker-row input{ accent-color: var(--rust); cursor:pointer; }
+  .label-picker-row .lp-sku{ color: var(--chrome); font-size: 11px; }
+
+  .print-label-sheet{ display:none; }
+
+  @media print{
+    body *{ visibility: hidden; }
+    .print-label-sheet, .print-label-sheet *{ visibility: visible; }
+    .print-label-sheet{
+      display: grid !important;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      position: absolute;
+      left: 0; top: 0;
+      width: 100%;
+      background: #fff;
+    }
+    .print-label{
+      border: 1px dashed #999;
+      padding: 10px;
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      break-inside: avoid;
+      color: #000;
+      background: #fff;
+    }
+    .print-label img{ width: 70px; height: 70px; flex-shrink:0; }
+    .print-label .pl-info{ font-family: monospace; font-size: 11px; line-height:1.4; color:#000; }
+    .print-label .pl-name{ font-weight:700; font-size:12px; }
+  }
+
+  /* ---------- Cash Out modal ---------- */
+  .modal-overlay{
+    display:none;
+    position: fixed;
+    inset: 0;
+    background: rgba(10,8,6,0.72);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .modal-overlay.open{ display:flex; }
+  .modal-box{
+    background: var(--asphalt-2);
+    border: 1px solid var(--line);
+    border-top: 3px solid var(--rust);
+    border-radius: 6px;
+    padding: 22px 24px;
+    max-width: 440px;
+    width: 100%;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+  }
+  .modal-box h2{
+    font-family:'Oswald', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-size: 19px;
+    color: var(--paper);
+    margin-bottom: 4px;
+  }
+  .modal-box .sub{ margin-bottom: 16px; color: var(--amber); font-weight: 600; }
+  .modal-box .form-grid{ margin-bottom: 4px; }
+
+  /* ---------- PIN gate ---------- */
+  .pin-gate{
+    position: fixed;
+    inset: 0;
+    background: var(--asphalt);
+    background-image: radial-gradient(circle at 20% 10%, rgba(193,89,30,0.06), transparent 45%);
+    z-index: 300;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .pin-gate.unlocked{ display: none; }
+  .pin-box{
+    background: var(--asphalt-2);
+    border: 1px solid var(--line);
+    border-top: 3px solid var(--rust);
+    border-radius: 6px;
+    padding: 26px 28px;
+    max-width: 400px;
+    width: 100%;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+  }
+  .lock-now-btn{
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    z-index: 250;
+    background: var(--asphalt-2);
+    border: 1px solid var(--line);
+    color: var(--chrome);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    padding: 7px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  .lock-now-btn:hover{ border-color: var(--rust); color: var(--rust); }
+
+  footer{
+    max-width:1080px; margin: 30px auto 0;
+    text-align:center; font-size: 11px; color: var(--chrome); opacity:0.6;
+    letter-spacing: 1px;
+  }
+
+  @media (max-width: 560px){
+    table, thead, tbody, th, td, tr{ display:block; }
+    thead{ display:none; }
+    td{ display:flex; justify-content:space-between; border:none; padding: 6px 4px; }
+    tr{ border-bottom: 1px solid var(--line); padding: 8px 0; }
+    td::before{ content: attr(data-label); color: var(--chrome); font-size:10px; text-transform:uppercase; letter-spacing:1px; }
+  }
+
+  :focus-visible{ outline: 2px solid var(--amber); outline-offset: 2px; }
+  @media (prefers-reduced-motion: reduce){ *{ animation: none !important; transition: none !important; } }
+</style>
+</head>
+<body>
+
+  <button type="button" id="lockNowBtn" class="lock-now-btn" title="Lock the dashboard">&#128274; Lock</button>
+
+  <div id="pinGate" class="pin-gate">
+    <div class="pin-box">
+      <div class="eyebrow" style="color:var(--rust); font-size:11px; letter-spacing:3px; text-transform:uppercase; margin-bottom:6px;">Hog's Den Parts</div>
+      <h1 style="font-family:'Oswald',sans-serif; font-size:26px; color:var(--paper); text-transform:uppercase; margin-bottom:14px;">Locked</h1>
+
+      <!-- SETUP VIEW: shown the first time, no PIN saved yet -->
+      <div id="pinSetupView" style="display:none;">
+        <div class="sub" style="margin-bottom:14px;">First time here — set a PIN to keep this off casual view. Anyone with real access to this file can bypass it, so treat it as a light gate, not real security.</div>
+        <div class="form-row">
+          <label for="pinSetupInput">Set a PIN (4&ndash;8 digits)</label>
+          <input type="password" id="pinSetupInput" inputmode="numeric" maxlength="8" autocomplete="new-password">
+        </div>
+        <div class="form-row">
+          <label for="pinSetupConfirm">Confirm PIN</label>
+          <input type="password" id="pinSetupConfirm" inputmode="numeric" maxlength="8" autocomplete="new-password">
+        </div>
+        <div class="form-actions">
+          <button type="button" id="pinSetupBtn" class="submit-btn">Set PIN &amp; Unlock</button>
+        </div>
+        <div id="pinSetupError" class="hint" style="color:var(--amber); margin-top:8px;"></div>
+        <button type="button" id="pinSkipBtn" class="mini-btn" style="margin-top:14px;">Skip for now</button>
+      </div>
+
+      <!-- UNLOCK VIEW: shown once a PIN already exists -->
+      <div id="pinUnlockView" style="display:none;">
+        <div class="sub" style="margin-bottom:14px;">Enter your PIN to continue.</div>
+        <div class="form-row">
+          <label for="pinUnlockInput">PIN</label>
+          <input type="password" id="pinUnlockInput" inputmode="numeric" maxlength="8" autocomplete="current-password">
+        </div>
+        <div class="form-actions">
+          <button type="button" id="pinUnlockBtn" class="submit-btn">Unlock</button>
+        </div>
+        <div id="pinUnlockError" class="hint" style="color:var(--amber); margin-top:8px;"></div>
+        <button type="button" id="pinForgotBtn" class="mini-btn" style="margin-top:14px;">Forgot PIN? Clear it</button>
+      </div>
+    </div>
+  </div>
+
+
+  <div class="signboard">
+    <div class="rivet-tl"></div><div class="rivet-br"></div>
+    <div class="eyebrow">Parts &amp; Service Command Board</div>
+    <h1>Hog's <span>Den</span> Harley Parts</h1>
+    <div class="tagline">Every bolt tracked. Every bike accounted for.</div>
+    <div class="est">EST. SHOP FLOOR</div>
+  </div>
+
+  <nav class="tags">
+    <div class="tag-wrap"><div class="string"></div>
+      <div class="tag active" data-target="inventory" tabindex="0"><span class="hole"></span>Inventory</div>
+    </div>
+    <div class="tag-wrap"><div class="string"></div>
+      <div class="tag" data-target="addpart" tabindex="0"><span class="hole"></span>Add Part</div>
+    </div>
+    <div class="tag-wrap"><div class="string"></div>
+      <div class="tag" data-target="orders" tabindex="0"><span class="hole"></span>Orders</div>
+    </div>
+    <div class="tag-wrap"><div class="string"></div>
+      <div class="tag" data-target="profit" tabindex="0"><span class="hole"></span>Profit</div>
+    </div>
+    <div class="tag-wrap"><div class="string"></div>
+      <div class="tag" data-target="expenses" tabindex="0"><span class="hole"></span>Expenses</div>
+    </div>
+    <div class="tag-wrap"><div class="string"></div>
+      <div class="tag" data-target="sales" tabindex="0"><span class="hole"></span>Sales</div>
+    </div>
+    <div class="tag-wrap"><div class="string"></div>
+      <div class="tag" data-target="admin" tabindex="0"><span class="hole"></span>Admin</div>
+    </div>
+  </nav>
+
+  <main>
+    <!-- INVENTORY -->
+    <section class="panel active" id="inventory">
+      <div class="board">
+        <h2>Low-Stock Alerts</h2>
+        <div class="sub">Parts added through the Add Part tab that are at or below their reorder threshold</div>
+        <div id="lowStockAlerts" class="alerts-box">
+          <div class="alert-empty">No low-stock alerts yet — add parts with a threshold to start tracking.</div>
+        </div>
+
+        <hr class="board-sep">
+        <h2>Fitment Lookup</h2>
+        <div class="sub">Find parts by model and year — searches parts added with fitment info</div>
+        <div class="fitment-bar">
+          <input type="text" id="fitModel" placeholder="Model (e.g. Road King)" autocomplete="off">
+          <input type="number" id="fitYear" placeholder="Year (e.g. 2019)" autocomplete="off">
+          <button type="button" id="fitSearchBtn">Find Fitment</button>
+          <button type="button" id="fitClearBtn">Clear</button>
+        </div>
+        <div id="fitmentResults" class="fitment-results"></div>
+
+        <hr class="board-sep">
+        <h2>Parts Catalog</h2>
+        <div class="sub">Browse by category — click a bin to open it</div>
+
+        <div class="search-bar">
+          <span class="search-icon">⌕</span>
+          <input type="text" id="partSearch" placeholder="Search all parts and categories… (e.g. &quot;belt&quot;, &quot;chrome&quot;, &quot;fair&quot;)" autocomplete="off">
+          <span id="searchCount" class="search-count"></span>
+        </div>
+
+        <div class="catalog" id="catalogRoot">
+          <details class="bin" data-category="engine" open>
+            <summary><span class="bin-hole"></span>Engine Components</summary>
+            <ul>
+              <li>Complete engines</li><li>Long blocks</li><li>Cylinder heads</li><li>Camshafts</li>
+              <li>Pistons and cylinders</li><li>Oil pumps</li><li>Fuel injection systems</li>
+              <li>Throttle bodies</li><li>Air cleaner assemblies</li>
+            </ul>
+          </details>
+          <details class="bin" data-category="drivetrain">
+            <summary><span class="bin-hole"></span>Drivetrain Components</summary>
+            <ul>
+              <li>Complete transmissions</li><li>Transmission cases</li><li>Clutch assemblies</li>
+              <li>Primary drive components</li><li>Compensators</li><li>Drive belts</li>
+              <li>Sprockets and pulleys</li>
+            </ul>
+          </details>
+          <details class="bin" data-category="electrical">
+            <summary><span class="bin-hole"></span>Electrical Components</summary>
+            <ul>
+              <li>ECM/ECU modules</li><li>Instrument clusters</li><li>Wiring harnesses</li>
+              <li>Ignition systems</li><li>Sensors</li><li>Switch housings</li>
+              <li>Handlebar controls</li><li>Lighting assemblies</li><li>ABS modules</li>
+            </ul>
+          </details>
+          <details class="bin" data-category="frontend">
+            <summary><span class="bin-hole"></span>Front-End Components</summary>
+            <ul>
+              <li>Fork assemblies</li><li>Triple trees</li><li>Handlebars</li><li>Risers</li>
+              <li>Front fenders</li><li>Brake calipers</li><li>Master cylinders</li><li>Rotors</li>
+            </ul>
+          </details>
+          <details class="bin" data-category="touring">
+            <summary><span class="bin-hole"></span>Touring Components</summary>
+            <ul>
+              <li>Fairings</li><li>Saddlebags</li><li>Tour-Paks</li><li>Windshields</li>
+              <li>Audio systems</li><li>Navigation components</li><li>Speaker systems</li>
+              <li>Saddlebag guards</li>
+            </ul>
+          </details>
+          <details class="bin" data-category="chassis">
+            <summary><span class="bin-hole"></span>Chassis Components</summary>
+            <ul>
+              <li>Frames (where legally permissible)</li><li>Swingarms</li><li>Wheels</li>
+              <li>Axles</li><li>Rear suspension components</li><li>Foot controls</li><li>Crash bars</li>
+            </ul>
+          </details>
+          <details class="bin" data-category="fuelexhaust">
+            <summary><span class="bin-hole"></span>Fuel &amp; Exhaust Systems</summary>
+            <ul>
+              <li>Fuel tanks</li><li>Fuel pumps</li><li>Exhaust headers</li><li>Mufflers</li>
+              <li>Complete exhaust systems</li>
+            </ul>
+          </details>
+          <details class="bin" data-category="seats">
+            <summary><span class="bin-hole"></span>Seats &amp; Accessories</summary>
+            <ul>
+              <li>Rider and passenger seats</li><li>Floorboards</li><li>Foot pegs</li><li>Mirrors</li>
+              <li>Luggage racks</li><li>Backrests</li><li>Custom Harley accessories</li>
+            </ul>
+          </details>
+          <details class="bin" data-category="specialty">
+            <summary><span class="bin-hole"></span>Specialty Products</summary>
+            <ul>
+              <li>Complete rolling chassis packages</li><li>Engine/transmission packages</li>
+              <li>Restoration project parts</li><li>Rare and discontinued Harley-Davidson components</li>
+              <li>Hard-to-find OEM parts</li>
+            </ul>
+          </details>
+        </div>
+
+        <hr class="board-sep">
+        <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
+          <h2 style="margin-bottom:0;">Cost &amp; Pricing</h2>
+          <button type="button" id="exportInventoryBtn" class="export-btn">Export Inventory CSV</button>
+        </div>
+        <div class="sub">What you paid, your markup, and the price it lists at</div>
+
+        <div class="markup-toolbar">
+          <label for="defaultMarkup">Default markup %</label>
+          <input type="number" id="defaultMarkup" value="65" min="0" step="1">
+          <button type="button" id="applyMarkupBtn">Apply to all rows</button>
+        </div>
+
+        <table class="pricing-table">
+          <thead><tr><th>Part</th><th>SKU</th><th>Qty</th><th>Cost Paid</th><th>Markup %</th><th>List Price</th><th></th></tr></thead>
+          <tbody id="pricingBody">
+            <tr data-cost="18.00" data-markup="65">
+              <td data-label="Part">Brake Pads (Front)</td><td data-label="SKU">BP-3301</td><td data-label="Qty">42</td>
+              <td data-label="Cost"><span class="dollar">$</span><input type="number" class="cost-input" value="18.00" step="0.01"></td>
+              <td data-label="Markup"><input type="number" class="markup-input" value="65" step="1"><span class="pct">%</span></td>
+              <td data-label="List Price" class="list-price">$29.70</td>
+            </tr>
+            <tr data-cost="9.50" data-markup="65">
+              <td data-label="Part">Air Filter — K&amp;N</td><td data-label="SKU">AF-1187</td><td data-label="Qty" class="qty-low">3</td>
+              <td data-label="Cost"><span class="dollar">$</span><input type="number" class="cost-input" value="9.50" step="0.01"></td>
+              <td data-label="Markup"><input type="number" class="markup-input" value="65" step="1"><span class="pct">%</span></td>
+              <td data-label="List Price" class="list-price">$15.68</td>
+            </tr>
+            <tr data-cost="6.20" data-markup="65">
+              <td data-label="Part">Oil Filter</td><td data-label="SKU">OF-0044</td><td data-label="Qty">58</td>
+              <td data-label="Cost"><span class="dollar">$</span><input type="number" class="cost-input" value="6.20" step="0.01"></td>
+              <td data-label="Markup"><input type="number" class="markup-input" value="65" step="1"><span class="pct">%</span></td>
+              <td data-label="List Price" class="list-price">$10.23</td>
+            </tr>
+            <tr data-cost="24.00" data-markup="65">
+              <td data-label="Part">Clutch Cable</td><td data-label="SKU">CC-2210</td><td data-label="Qty">7</td>
+              <td data-label="Cost"><span class="dollar">$</span><input type="number" class="cost-input" value="24.00" step="0.01"></td>
+              <td data-label="Markup"><input type="number" class="markup-input" value="65" step="1"><span class="pct">%</span></td>
+              <td data-label="List Price" class="list-price">$39.60</td>
+            </tr>
+            <tr data-cost="45.00" data-markup="65">
+              <td data-label="Part">Chrome Mirror Set</td><td data-label="SKU">CM-5502</td><td data-label="Qty">12</td>
+              <td data-label="Cost"><span class="dollar">$</span><input type="number" class="cost-input" value="45.00" step="0.01"></td>
+              <td data-label="Markup"><input type="number" class="markup-input" value="65" step="1"><span class="pct">%</span></td>
+              <td data-label="List Price" class="list-price">$74.25</td>
+            </tr>
+            <tr data-cost="1.80" data-markup="65">
+              <td data-label="Part">Spark Plugs</td><td data-label="SKU">SP-0091</td><td data-label="Qty" class="qty-low">2</td>
+              <td data-label="Cost"><span class="dollar">$</span><input type="number" class="cost-input" value="1.80" step="0.01"></td>
+              <td data-label="Markup"><input type="number" class="markup-input" value="65" step="1"><span class="pct">%</span></td>
+              <td data-label="List Price" class="list-price">$2.97</td>
+            </tr>
+            <tr data-cost="11.00" data-markup="65">
+              <td data-label="Part">Handlebar Grips</td><td data-label="SKU">HG-7734</td><td data-label="Qty">25</td>
+              <td data-label="Cost"><span class="dollar">$</span><input type="number" class="cost-input" value="11.00" step="0.01"></td>
+              <td data-label="Markup"><input type="number" class="markup-input" value="65" step="1"><span class="pct">%</span></td>
+              <td data-label="List Price" class="list-price">$18.15</td>
+            </tr>
+            <tr data-cost="38.00" data-markup="65">
+              <td data-label="Part">Drive Belt</td><td data-label="SKU">DB-8820</td><td data-label="Qty" class="qty-low">4</td>
+              <td data-label="Cost"><span class="dollar">$</span><input type="number" class="cost-input" value="38.00" step="0.01"></td>
+              <td data-label="Markup"><input type="number" class="markup-input" value="65" step="1"><span class="pct">%</span></td>
+              <td data-label="List Price" class="list-price">$62.70</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="sub" style="margin-top:8px;">Edit any cost or markup — list price recalculates as you type. Rows added here reset on reload; use the Add Part tab to save new parts permanently.</div>
+
+        <hr class="board-sep">
+        <h2>Bin Labels</h2>
+        <div class="sub">Pick parts and print QR labels to stick on the shelf — scanning one pulls up the part name and SKU</div>
+        <div id="labelPickerList" class="label-picker-list">
+          <div class="alert-empty">Add parts from the Add Part tab to generate labels for them.</div>
+        </div>
+        <div class="form-actions" style="margin-top:12px;">
+          <button type="button" id="printLabelsBtn" class="submit-btn">Print Selected Labels</button>
+          <button type="button" id="selectAllLabelsBtn" class="export-btn">Select All</button>
+        </div>
+
+        <div id="printLabelSheet" class="print-label-sheet"></div>
+      </div>
+    </section>
+
+    <!-- ADD PART -->
+    <section class="panel" id="addpart">
+      <div class="board">
+        <h2>Add a Part</h2>
+        <div class="sub">New intake ticket — saved to this catalog and remembered next time you open the board</div>
+
+        <form id="addPartForm" class="intake-form">
+          <div class="form-row">
+            <label for="p-category">Category</label>
+            <select id="p-category" required>
+              <option value="engine">Engine Components</option>
+              <option value="drivetrain">Drivetrain Components</option>
+              <option value="electrical">Electrical Components</option>
+              <option value="frontend">Front-End Components</option>
+              <option value="touring">Touring Components</option>
+              <option value="chassis">Chassis Components</option>
+              <option value="fuelexhaust">Fuel &amp; Exhaust Systems</option>
+              <option value="seats">Seats &amp; Accessories</option>
+              <option value="specialty">Specialty Products</option>
+            </select>
+          </div>
+
+          <div class="form-row">
+            <label for="p-name">Part name</label>
+            <input type="text" id="p-name" placeholder="e.g. Rear Brake Caliper" required>
+          </div>
+
+          <div class="form-grid">
+            <div class="form-row">
+              <label for="p-sku">SKU</label>
+              <input type="text" id="p-sku" placeholder="e.g. RC-9012">
+            </div>
+            <div class="form-row">
+              <label for="p-qty">Qty on hand</label>
+              <input type="number" id="p-qty" value="1" min="0" step="1">
+            </div>
+            <div class="form-row">
+              <label for="p-bin">Bin / location</label>
+              <input type="text" id="p-bin" placeholder="e.g. A3">
+            </div>
+          </div>
+
+          <div class="form-grid">
+            <div class="form-row">
+              <label for="p-cost">Cost paid ($)</label>
+              <input type="number" id="p-cost" value="0.00" min="0" step="0.01">
+            </div>
+            <div class="form-row">
+              <label for="p-markup">Markup (%)</label>
+              <input type="number" id="p-markup" value="65" min="0" step="1">
+            </div>
+            <div class="form-row">
+              <label>List price</label>
+              <div class="computed-price" id="p-listprice">$0.00</div>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <label for="p-threshold">Low-stock alert threshold</label>
+            <input type="number" id="p-threshold" value="5" min="0" step="1">
+          </div>
+
+          <hr class="form-sep">
+          <div class="form-section-label">Fitment</div>
+          <div class="form-grid">
+            <div class="form-row">
+              <label for="p-model">Model(s)</label>
+              <input type="text" id="p-model" placeholder="e.g. Road King, Street Glide">
+            </div>
+            <div class="form-row">
+              <label for="p-yearfrom">Year from</label>
+              <input type="number" id="p-yearfrom" placeholder="e.g. 2014" min="1903" max="2030">
+            </div>
+            <div class="form-row">
+              <label for="p-yearto">Year to</label>
+              <input type="number" id="p-yearto" placeholder="e.g. 2023" min="1903" max="2030">
+            </div>
+          </div>
+
+          <hr class="form-sep">
+          <div class="form-section-label">Source &amp; Inspection</div>
+          <div class="form-grid">
+            <div class="form-row">
+              <label for="p-source">Source</label>
+              <select id="p-source">
+                <option value="">— select —</option>
+                <option value="salvage">Salvage Yard</option>
+                <option value="tradein">Trade-In</option>
+                <option value="partedbike">Parted Bike</option>
+                <option value="auction">Auction</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            <div class="form-row">
+              <label for="p-acqdate">Acquired on</label>
+              <input type="date" id="p-acqdate">
+            </div>
+            <div class="form-row">
+              <label for="p-compression">Compression test</label>
+              <select id="p-compression">
+                <option value="na">N/A</option>
+                <option value="pass">Passed</option>
+                <option value="fail">Failed</option>
+                <option value="untested">Not yet tested</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <label for="p-inspection">Inspection notes</label>
+            <textarea id="p-inspection" rows="2" placeholder="Condition, wear, test results…"></textarea>
+          </div>
+
+          <div class="form-row">
+            <label for="p-compprice">Comparable listing prices</label>
+            <input type="text" id="p-compprice" placeholder="e.g. Seen $60-75 on eBay for similar condition">
+          </div>
+
+          <div class="form-row">
+            <label for="p-photo">Photos <span style="color:var(--chrome); font-weight:400; text-transform:none; letter-spacing:0;">(select up to 6)</span></label>
+            <input type="file" id="p-photo" accept="image/*" multiple>
+            <div id="p-photo-preview-grid" class="photo-preview-grid"></div>
+          </div>
+
+          <div class="form-row">
+            <label for="p-notes">Additional notes</label>
+            <textarea id="p-notes" rows="2" placeholder="Anything else worth flagging…"></textarea>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="submit-btn">Add to Catalog</button>
+            <button type="button" id="generateDescBtn" class="export-btn">Generate Listing Description</button>
+            <span id="addPartConfirm" class="confirm-msg"></span>
+          </div>
+
+          <div id="listingDescBox" class="listing-desc-box" style="display:none;">
+            <div class="form-section-label">Draft Listing Description</div>
+            <textarea id="listingDescOutput" rows="8" readonly></textarea>
+            <button type="button" id="copyDescBtn" class="export-btn" style="margin-top:8px;">Copy to Clipboard</button>
+            <span id="copyDescConfirm" class="confirm-msg"></span>
+          </div>
+        </form>
+
+        <hr class="board-sep">
+        <h2>Bulk Import</h2>
+        <div class="sub">Tore down a whole bike? Upload a CSV instead of adding parts one by one.</div>
+        <div class="bulk-import-box">
+          <div class="bulk-import-row">
+            <label for="bulkCsvInput" class="submit-btn bulk-file-label">Choose CSV File</label>
+            <input type="file" id="bulkCsvInput" accept=".csv" style="display:none;">
+            <span id="bulkFileName" class="hint">No file chosen</span>
+            <button type="button" id="bulkTemplateBtn" class="export-btn">Download Template</button>
+          </div>
+          <div id="bulkImportResult" class="hint" style="margin-top:6px;"></div>
+        </div>
+
+        <hr class="board-sep">
+        <h2>Recently Added</h2>
+        <div class="sub">Parts you've added from this tab</div>
+        <table class="pricing-table">
+          <thead><tr><th>Photo</th><th>Part</th><th>Category</th><th>SKU</th><th>Qty</th><th>Cost</th><th>Markup</th><th>List Price</th><th></th></tr></thead>
+          <tbody id="recentAddedBody">
+            <tr id="recentEmptyRow"><td colspan="9" style="color:var(--chrome); font-style:italic;">No parts added yet — use the form above.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ORDERS -->
+    <section class="panel" id="orders">
+      <div class="board">
+        <h2>Log an Order</h2>
+        <div class="sub">Track a sale from sold through delivered</div>
+
+        <form id="orderForm" class="intake-form">
+          <div class="form-grid">
+            <div class="form-row">
+              <label for="o-part">Part sold</label>
+              <input type="text" id="o-part" placeholder="e.g. Rear Brake Caliper" required list="orderPartList">
+              <datalist id="orderPartList"></datalist>
+            </div>
+            <div class="form-row">
+              <label for="o-customer">Customer</label>
+              <input type="text" id="o-customer" placeholder="e.g. J. Ferreira" list="customerList">
+              <datalist id="customerList"></datalist>
+            </div>
+            <div class="form-row">
+              <label for="o-channel">Channel</label>
+              <select id="o-channel">
+                <option>eBay Motors</option>
+                <option>Facebook Marketplace</option>
+                <option>Facebook Groups</option>
+                <option>Craigslist</option>
+                <option>Harley Forums</option>
+                <option>HogsDenParts.com</option>
+                <option>Walk-in / Local</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-grid">
+            <div class="form-row">
+              <label for="o-saleprice">Sale price ($)</label>
+              <input type="number" id="o-saleprice" value="0.00" min="0" step="0.01">
+            </div>
+            <div class="form-row">
+              <label for="o-itemcost">Item cost ($)</label>
+              <input type="number" id="o-itemcost" value="0.00" min="0" step="0.01">
+              <span class="hint">Auto-fills if the part name matches one you added</span>
+            </div>
+            <div class="form-row">
+              <label for="o-tax">Tax collected ($)</label>
+              <input type="number" id="o-tax" value="0.00" min="0" step="0.01">
+            </div>
+            <div class="form-row">
+              <label for="o-status">Status</label>
+              <select id="o-status">
+                <option>Sold</option>
+                <option>Packed</option>
+                <option>Shipped</option>
+                <option>Delivered</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-grid">
+            <div class="form-row">
+              <label for="o-tracking">Tracking number</label>
+              <input type="text" id="o-tracking" placeholder="optional">
+            </div>
+            <div class="form-row">
+              <label for="o-date">Order date</label>
+              <input type="date" id="o-date">
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="submit-btn">Log Order</button>
+            <span id="orderConfirm" class="confirm-msg"></span>
+          </div>
+        </form>
+
+        <hr class="board-sep">
+        <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
+          <h2 style="margin-bottom:0;">Order History</h2>
+          <button type="button" id="exportOrdersBtn" class="export-btn">Export Orders CSV</button>
+        </div>
+        <div class="sub">Every order logged from this tab</div>
+        <table class="pricing-table">
+          <thead><tr><th>Date</th><th>Part</th><th>Customer</th><th>Channel</th><th>Sale Price</th><th>Tax</th><th>Profit</th><th>Status</th><th>Tracking</th></tr></thead>
+          <tbody id="ordersBody">
+            <tr id="ordersEmptyRow"><td colspan="9" style="color:var(--chrome); font-style:italic;">No orders logged yet.</td></tr>
+          </tbody>
+        </table>
+
+        <hr class="board-sep">
+        <h2>Customers</h2>
+        <div class="sub">Rolled up automatically from your order history</div>
+        <table class="pricing-table">
+          <thead><tr><th>Customer</th><th>Orders</th><th>Total Spent</th><th>Last Order</th><th>Usual Channel</th></tr></thead>
+          <tbody id="customersBody">
+            <tr id="customersEmptyRow"><td colspan="5" style="color:var(--chrome); font-style:italic;">No customers yet — log an order to see them here.</td></tr>
+          </tbody>
+        </table>
+
+        <hr class="board-sep">
+        <h2>Returns &amp; Disputes</h2>
+        <div class="sub">Track anything reported under the 48-hour, photo-evidence policy</div>
+
+        <form id="disputeForm" class="intake-form">
+          <div class="form-grid">
+            <div class="form-row">
+              <label for="d-part">Part / order</label>
+              <input type="text" id="d-part" placeholder="e.g. Rear Brake Caliper — #4471" required>
+            </div>
+            <div class="form-row">
+              <label for="d-customer">Customer</label>
+              <input type="text" id="d-customer" placeholder="e.g. J. Ferreira">
+            </div>
+            <div class="form-row">
+              <label for="d-date">Date reported</label>
+              <input type="date" id="d-date">
+            </div>
+          </div>
+          <div class="form-row">
+            <label for="d-reason">Reason</label>
+            <input type="text" id="d-reason" placeholder="e.g. Item arrived cracked, photos provided">
+          </div>
+          <div class="form-grid">
+            <div class="form-row">
+              <label for="d-status">Status</label>
+              <select id="d-status">
+                <option>Open</option>
+                <option>Under Review</option>
+                <option>Resolved — Refunded</option>
+                <option>Resolved — Replaced</option>
+                <option>Resolved — Denied</option>
+              </select>
+            </div>
+            <div class="form-row">
+              <label for="d-refund">Refund amount ($)</label>
+              <input type="number" id="d-refund" value="0.00" min="0" step="0.01">
+            </div>
+          </div>
+          <div class="form-row">
+            <label for="d-resolution">Resolution notes</label>
+            <textarea id="d-resolution" rows="2" placeholder="What happened and how it was resolved…"></textarea>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="submit-btn">Log Dispute</button>
+            <span id="disputeConfirm" class="confirm-msg"></span>
+          </div>
+        </form>
+
+        <table class="pricing-table">
+          <thead><tr><th>Date</th><th>Part / Order</th><th>Customer</th><th>Reason</th><th>Status</th><th>Refund</th></tr></thead>
+          <tbody id="disputesBody">
+            <tr id="disputesEmptyRow"><td colspan="6" style="color:var(--chrome); font-style:italic;">No disputes logged — hopefully it stays that way.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- PROFIT -->
+    <section class="panel" id="profit">
+      <div class="board">
+        <h2>Profit &amp; Margin</h2>
+        <div class="sub">Pulled from parts added via Add Part and orders logged via Orders</div>
+        <div class="stats" id="profitStats">
+          <div class="stat"><div class="label">Inventory Cost Invested</div><div class="num"><small>$</small><span id="statInvested">0</span></div></div>
+          <div class="stat"><div class="label">Potential Revenue on Hand</div><div class="num"><small>$</small><span id="statPotential">0</span></div></div>
+          <div class="stat"><div class="label">Realized Revenue</div><div class="num"><small>$</small><span id="statRealized">0</span></div></div>
+          <div class="stat"><div class="label">Realized Profit</div><div class="num"><small>$</small><span id="statProfit">0</span></div></div>
+          <div class="stat"><div class="label">Shop Expenses</div><div class="num"><small>$</small><span id="statExpensesTotal">0</span></div></div>
+          <div class="stat"><div class="label">Net Profit (after expenses)</div><div class="num"><small>$</small><span id="statNetProfit">0</span></div></div>
+        </div>
+        <div class="sub" id="marginSub" style="margin-top:6px;">Average realized margin: —</div>
+        <div class="sub" style="margin-top:14px; font-style:italic;">Note: this only counts parts added through the Add Part tab and orders logged through the Orders tab — the starter catalog items are placeholders and aren't included.</div>
+
+        <hr class="board-sep">
+        <h2>This Week</h2>
+        <div class="sub">Last 7 days, generated automatically</div>
+        <div class="stats" id="weeklyStats">
+          <div class="stat"><div class="label">Parts Added</div><div class="num" id="statPartsAdded">0</div></div>
+          <div class="stat"><div class="label">Orders Logged</div><div class="num" id="statOrdersWeek">0</div></div>
+          <div class="stat"><div class="label">Revenue</div><div class="num"><small>$</small><span id="statRevenueWeek">0</span></div></div>
+          <div class="stat"><div class="label">Profit</div><div class="num"><small>$</small><span id="statProfitWeek">0</span></div></div>
+        </div>
+        <div class="sub" id="lowStockWeekSub" style="margin-top:10px;">Low-stock items right now: 0</div>
+
+        <hr class="board-sep">
+        <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
+          <h2 style="margin-bottom:0;">Tax Report</h2>
+          <button type="button" id="exportTaxBtn" class="export-btn">Export Tax Report CSV</button>
+        </div>
+        <div class="sub">Sales tax collected on logged orders — for filing, not a substitute for a licensed accountant</div>
+
+        <div class="stats">
+          <div class="stat"><div class="label">Total Tax Collected</div><div class="num"><small>$</small><span id="statTaxTotal">0.00</span></div></div>
+          <div class="stat"><div class="label">Tax Collected This Month</div><div class="num"><small>$</small><span id="statTaxMonth">0.00</span></div></div>
+          <div class="stat"><div class="label">Taxable Orders</div><div class="num" id="statTaxOrderCount">0</div></div>
+        </div>
+
+        <div class="sub" style="margin-top:4px; margin-bottom:10px;">By month</div>
+        <table class="pricing-table">
+          <thead><tr><th>Month</th><th>Orders</th><th>Sales Total</th><th>Tax Collected</th></tr></thead>
+          <tbody id="taxReportBody">
+            <tr id="taxReportEmptyRow"><td colspan="4" style="color:var(--chrome); font-style:italic;">No taxed orders logged yet.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- EXPENSES -->
+    <section class="panel" id="expenses">
+      <div class="board">
+        <h2>Log a Shop Expense</h2>
+        <div class="sub">Costs that aren't tied to any one part — supplies, fees, gas, rent</div>
+
+        <form id="expenseForm" class="intake-form">
+          <div class="form-grid">
+            <div class="form-row">
+              <label for="e-category">Category</label>
+              <select id="e-category">
+                <option>Shipping Supplies</option>
+                <option>Listing Fees</option>
+                <option>Gas &amp; Travel</option>
+                <option>Storage Rent</option>
+                <option>Tools &amp; Equipment</option>
+                <option>Other</option>
+              </select>
+            </div>
+            <div class="form-row">
+              <label for="e-amount">Amount ($)</label>
+              <input type="number" id="e-amount" value="0.00" min="0" step="0.01">
+            </div>
+            <div class="form-row">
+              <label for="e-date">Date</label>
+              <input type="date" id="e-date">
+            </div>
+          </div>
+          <div class="form-row">
+            <label for="e-notes">Notes</label>
+            <input type="text" id="e-notes" placeholder="e.g. Box of 50 poly mailers, size 6">
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="submit-btn">Log Expense</button>
+            <span id="expenseConfirm" class="confirm-msg"></span>
+          </div>
+        </form>
+
+        <hr class="board-sep">
+        <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
+          <h2 style="margin-bottom:0;">Expense Log</h2>
+          <button type="button" id="exportExpensesBtn" class="export-btn">Export Expenses CSV</button>
+        </div>
+        <div class="sub">Running total: <span id="expensesRunningTotal" style="color:var(--amber); font-weight:700;">$0.00</span></div>
+        <table class="pricing-table">
+          <thead><tr><th>Date</th><th>Category</th><th>Amount</th><th>Notes</th></tr></thead>
+          <tbody id="expensesBody">
+            <tr id="expensesEmptyRow"><td colspan="4" style="color:var(--chrome); font-style:italic;">No expenses logged yet.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- SALES -->
+    <section class="panel" id="sales">
+      <div class="board">
+        <h2>Sales Board</h2>
+        <div class="sub">Chalked up fresh this morning</div>
+        <div class="stats">
+          <div class="stat"><div class="label">Today's Sales</div><div class="num"><small>$</small>2,340</div></div>
+          <div class="stat"><div class="label">This Week</div><div class="num"><small>$</small>14,820</div></div>
+          <div class="stat"><div class="label">Open Tickets</div><div class="num">12</div></div>
+          <div class="stat"><div class="label">Parts Sold Today</div><div class="num">27</div></div>
+        </div>
+        <hr class="board-sep">
+        <div class="sub" style="margin-bottom:12px;">Recent Tickets</div>
+        <table>
+          <thead><tr><th>Ticket</th><th>Customer</th><th>Item</th><th>Total</th></tr></thead>
+          <tbody>
+            <tr><td data-label="Ticket">#4471</td><td data-label="Customer">S. Whitfield</td><td data-label="Item">Full Service — Iron 883</td><td data-label="Total">$310.00</td></tr>
+            <tr><td data-label="Ticket">#4470</td><td data-label="Customer">R. Ngata</td><td data-label="Item">Chrome Mirror Set</td><td data-label="Total">$84.50</td></tr>
+            <tr><td data-label="Ticket">#4469</td><td data-label="Customer">M. Alvarez</td><td data-label="Item">Drive Belt Replacement</td><td data-label="Total">$226.00</td></tr>
+          </tbody>
+        </table>
+
+        <hr class="board-sep">
+        <h2>Sales Channels</h2>
+        <div class="sub">Where Hog's Den moves parts</div>
+        <div class="channels">
+          <div class="channel"><span class="channel-dot live"></span>eBay Motors</div>
+          <div class="channel"><span class="channel-dot live"></span>Facebook Marketplace</div>
+          <div class="channel"><span class="channel-dot live"></span>Facebook Groups</div>
+          <div class="channel"><span class="channel-dot live"></span>Craigslist</div>
+          <div class="channel"><span class="channel-dot live"></span>Harley-Davidson Forums</div>
+          <div class="channel"><span class="channel-dot soon"></span>HogsDenParts.com <em>(own website — future expansion)</em></div>
+        </div>
+
+        <div class="ebay-status">
+          <div class="admin-row"><span>eBay seller account set up</span><div class="toggle" style="background:#4a4640;"></div></div>
+          <div class="admin-row"><span>Current seller rating</span><span class="rating-placeholder">— not yet rated —</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ADMIN -->
+    <section class="panel" id="admin">
+      <div class="board">
+        <h2>Startup Checklist</h2>
+        <div class="sub">Everything to line up before Hog's Den is fully open for business</div>
+
+        <div class="checklist-progress">
+          <div class="checklist-progress-bar"><div id="checklistFill" class="checklist-progress-fill"></div></div>
+          <span id="checklistPct" class="checklist-pct">0% complete</span>
+        </div>
+
+        <div class="checklist-groups" id="checklistRoot">
+          <div class="checklist-group">
+            <div class="checklist-group-title">Legal &amp; Financial</div>
+            <label class="check-row"><input type="checkbox" data-key="llc-filed"><span>File the LLC and confirm state registration</span></label>
+            <label class="check-row"><input type="checkbox" data-key="ein"><span>Get an EIN from the IRS</span></label>
+            <label class="check-row"><input type="checkbox" data-key="bank-account"><span>Open a separate business bank account</span></label>
+            <label class="check-row"><input type="checkbox" data-key="sales-tax-permit"><span>Register for sales tax permit / reseller certificate</span></label>
+            <label class="check-row"><input type="checkbox" data-key="bookkeeping"><span>Set up bookkeeping (spreadsheet or software)</span></label>
+          </div>
+
+          <div class="checklist-group">
+            <div class="checklist-group-title">Sourcing Inventory</div>
+            <label class="check-row"><input type="checkbox" data-key="salvage-relationships"><span>Build relationships with salvage auctions / yards</span></label>
+            <label class="check-row"><input type="checkbox" data-key="eval-process"><span>Nail down a process for evaluating bikes before buying</span></label>
+            <label class="check-row"><input type="checkbox" data-key="storage-space"><span>Secure storage space for teardown &amp; shelving</span></label>
+          </div>
+
+          <div class="checklist-group">
+            <div class="checklist-group-title">Selling Platforms</div>
+            <label class="check-row"><input type="checkbox" data-key="ebay-account"><span>Set up eBay Motors seller account</span></label>
+            <label class="check-row"><input type="checkbox" data-key="fitment-charts"><span>Learn eBay's fitment/compatibility listing requirements</span></label>
+            <label class="check-row"><input type="checkbox" data-key="camera-setup"><span>Get a camera/lighting setup for high-res photos</span></label>
+            <label class="check-row"><input type="checkbox" data-key="fb-shop"><span>Create a Facebook Shop / business page</span></label>
+          </div>
+
+          <div class="checklist-group">
+            <div class="checklist-group-title">Shipping &amp; Fulfillment</div>
+            <label class="check-row"><input type="checkbox" data-key="packaging"><span>Stock packaging for oversized/heavy parts</span></label>
+            <label class="check-row"><input type="checkbox" data-key="freight-account"><span>Set up a freight account for engines, frames, wheels</span></label>
+            <label class="check-row"><input type="checkbox" data-key="hazmat-rules"><span>Learn hazmat rules for fuel residue / batteries</span></label>
+          </div>
+
+          <div class="checklist-group">
+            <div class="checklist-group-title">Risk Management</div>
+            <label class="check-row"><input type="checkbox" data-key="liability-insurance"><span>Get general &amp; product liability insurance</span></label>
+            <label class="check-row"><input type="checkbox" data-key="attorney-review"><span>Have an attorney review the all-sales-final policy</span></label>
+            <label class="check-row"><input type="checkbox" data-key="trademark-check"><span>Review branding so it doesn't imply HD affiliation</span></label>
+          </div>
+        </div>
+
+        <hr class="board-sep">
+        <h2>Shop Admin</h2>
+        <div class="sub">Staff on the clock &amp; shop settings</div>
+        <div class="admin-list">
+          <div class="admin-row"><div>Ray Doucet <div class="role">Lead Mechanic</div></div><div class="status ready">On Shift</div></div>
+          <div class="admin-row"><div>Dutch Kellerman <div class="role">Mechanic</div></div><div class="status ready">On Shift</div></div>
+          <div class="admin-row"><div>Smokey Reyes <div class="role">Diagnostics</div></div><div class="status wait">On Break</div></div>
+          <div class="admin-row"><div>Angie Petrov <div class="role">Front Counter</div></div><div class="status ready">On Shift</div></div>
+        </div>
+        <hr class="board-sep">
+        <div class="sub" style="margin-bottom:12px;">Shop Settings</div>
+        <div class="admin-list">
+          <div class="admin-row"><span>Accept walk-in service</span><div class="toggle"></div></div>
+          <div class="admin-row"><span>Low-stock alerts</span><div class="toggle"></div></div>
+          <div class="admin-row"><span>Sunday hours</span><div class="toggle" style="background:#4a4640;"></div></div>
+        </div>
+
+        <hr class="board-sep">
+        <h2>What Sets Us Apart</h2>
+        <div class="sub">Standing promise vs. traditional salvage outfits</div>
+        <div class="promise-grid">
+          <div class="promise">Component testing when possible</div>
+          <div class="promise">Compression-tested engine sales</div>
+          <div class="promise">Detailed part inspections</div>
+          <div class="promise">High-resolution photographs</div>
+          <div class="promise">Accurate fitment information</div>
+          <div class="promise">Professional packaging and shipping</div>
+          <div class="promise">Technical support for customers</div>
+          <div class="promise">Fast nationwide shipping</div>
+        </div>
+
+        <hr class="board-sep">
+        <h2>Sales Policy</h2>
+        <div class="sub">Posted at checkout and on every listing</div>
+        <div class="legal-block">
+          <p><strong>ALL SALES ARE FINAL.</strong> Due to the nature of used and salvaged motorcycle components, Hog's Den Parts LLC does not accept returns, exchanges, or offer refunds once an order has shipped, except where required by law.</p>
+          <p>Parts are sold <strong>as-is, where-is</strong>, based on the description, photographs, and any inspection or compression-test results provided at time of listing. Buyers are responsible for confirming fitment against their specific make, model, and year prior to purchase.</p>
+          <p>No warranty, express or implied — including any implied warranty of merchantability or fitness for a particular purpose — is provided unless explicitly stated in writing on the individual listing.</p>
+          <p>Disputes regarding item condition must be reported within <strong>48 hours of delivery</strong> with photographic evidence. Shipping damage claims are handled per carrier policy and must be reported immediately upon receipt.</p>
+          <p class="legal-note">This is placeholder policy language for internal reference only and is not legal advice. Have final wording reviewed by a licensed attorney in your state before publishing it on listings or your website.</p>
+        </div>
+
+        <hr class="board-sep">
+        <h2>Legal &amp; Licensing Reference (Florida)</h2>
+        <div class="sub">Researched from Florida agency sources for Okaloosa County — verify everything directly before relying on it</div>
+        <div class="legal-block">
+          <p><strong>Read this first:</strong> this section is a starting-point reference, not legal advice. Requirements change, agencies interpret rules case-by-case, and nothing here should be treated as final. Confirm everything directly with FLHSMV, the Florida Department of Revenue, and a licensed Florida attorney before operating.</p>
+        </div>
+
+        <table class="pricing-table" style="margin-top:14px;">
+          <thead><tr><th>Requirement</th><th>Why it likely applies</th><th>Agency</th></tr></thead>
+          <tbody>
+            <tr>
+              <td data-label="Requirement"><strong>Salvage Motor Vehicle Dealer (SD) License</strong></td>
+              <td data-label="Why">Florida Statute 320.27 defines a "salvage motor vehicle dealer" as anyone who acquires salvaged or wrecked motor vehicles for the purpose of reselling them <strong>or their parts</strong>. If you personally buy wrecked or parted-out bikes to break down and resell components — as opposed to buying already-removed individual parts from someone else — this license very likely applies to you.</td>
+              <td data-label="Agency">FLHSMV, Bureau of Dealer Services</td>
+            </tr>
+            <tr>
+              <td data-label="Requirement">LLC State Registration</td>
+              <td data-label="Why">Required to operate as an LLC in Florida</td>
+              <td data-label="Agency">FL Division of Corporations (Sunbiz)</td>
+            </tr>
+            <tr>
+              <td data-label="Requirement">EIN</td>
+              <td data-label="Why">Needed for business banking and tax filing</td>
+              <td data-label="Agency">IRS</td>
+            </tr>
+            <tr>
+              <td data-label="Requirement">Sales Tax / Reseller Certificate</td>
+              <td data-label="Why">Required to collect and remit Florida sales tax, and to buy inventory tax-free for resale</td>
+              <td data-label="Agency">Florida Department of Revenue</td>
+            </tr>
+            <tr>
+              <td data-label="Requirement">Secondhand Dealer Registration (Ch. 538, F.S.)</td>
+              <td data-label="Why">Possibly applicable depending on how used parts are classified under this chapter — genuinely unclear from public guidance alone; worth a direct call to confirm</td>
+              <td data-label="Agency">Florida Department of Revenue</td>
+            </tr>
+            <tr>
+              <td data-label="Requirement">Local Business Tax Receipt</td>
+              <td data-label="Why">Standard local occupational license for operating a business in the county</td>
+              <td data-label="Agency">Okaloosa County Tax Collector</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="legal-block" style="margin-top:14px;">
+          <p><strong>The physical-location issue is the one to resolve first.</strong> Florida's SD license application process (form HSMV 86056) generally requires a permanent, established place of business — an enclosed building with at least 100 sq ft of dedicated office space, a permanent sign visible from the road, and space set aside for the business that isn't shared with other uses. It is not clearly available for a purely home/garage-based operation. Before assuming this business can run entirely out of a home garage, call FLHSMV directly and ask how they treat a parts-only operation like this one — the answer materially affects whether this stays home-based or needs a small commercial space.</p>
+          <p>Salvage dealers are exempt from the garage liability insurance requirement that applies to some other dealer types, but a surety bond and other application requirements may still apply — confirm current figures directly with FLHSMV rather than relying on this note, since bond costs and thresholds are set by the state and can change.</p>
+          <p>Recordkeeping: Florida requires dealers to keep purchase, sale, and title records for five years. Regardless of which license ultimately applies, keeping detailed records of where every part came from (already built into the Add Part form's Source field) is good practice and likely to be expected by any of the agencies above.</p>
+        </div>
+
+        <div class="legal-block" style="margin-top:14px;">
+          <p><strong>General, non-Florida-specific items worth knowing about:</strong></p>
+          <p>Trademark: reselling genuine used OEM Harley-Davidson parts is generally protected under the first-sale doctrine, but branding and marketing should avoid implying official dealer or manufacturer affiliation.</p>
+          <p>Shipping: engines and other parts with residual fuel or attached batteries may fall under hazmat shipping rules — check with your carrier before listing anything that hasn't been fully drained and prepped.</p>
+          <p>Environmental: draining fluids (oil, coolant, brake fluid) from parts before resale may trigger state or local hazardous-waste disposal rules — check with the Florida Department of Environmental Protection or your county before disposing of anything down a drain or in regular trash.</p>
+        </div>
+
+        <hr class="board-sep">
+        <h2>Backup &amp; Restore</h2>
+        <div class="sub">Everything lives in this browser's storage — export a copy so you never lose it</div>
+        <div class="bulk-import-box">
+          <div class="bulk-import-row">
+            <button type="button" id="exportBackupBtn" class="submit-btn">Export Full Backup</button>
+            <label for="restoreBackupInput" class="export-btn bulk-file-label">Restore From Backup</label>
+            <input type="file" id="restoreBackupInput" accept=".json" style="display:none;">
+          </div>
+          <div id="backupResult" class="hint" style="margin-top:8px;"></div>
+          <div class="hint" style="margin-top:8px;">Restoring replaces current parts, orders, and checklist data with what's in the backup file — export first if you want to keep what's here now.</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>Hog's Den Harley Parts — Shop Floor Board</footer>
+
+  <div id="cashoutModal" class="modal-overlay">
+    <div class="modal-box">
+      <h2>Cash Out Sale</h2>
+      <div class="sub" id="cashoutPartName">—</div>
+      <div class="form-grid">
+        <div class="form-row">
+          <label for="co-customer">Customer</label>
+          <input type="text" id="co-customer" placeholder="e.g. J. Ferreira" list="customerList">
+        </div>
+        <div class="form-row">
+          <label for="co-channel">Channel</label>
+          <select id="co-channel">
+            <option>eBay Motors</option>
+            <option>Facebook Marketplace</option>
+            <option>Facebook Groups</option>
+            <option>Craigslist</option>
+            <option>Harley Forums</option>
+            <option>HogsDenParts.com</option>
+            <option>Walk-in / Local</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-grid">
+        <div class="form-row">
+          <label for="co-saleprice">Sale price ($)</label>
+          <input type="number" id="co-saleprice" min="0" step="0.01">
+        </div>
+        <div class="form-row">
+          <label for="co-tax">Tax collected ($)</label>
+          <input type="number" id="co-tax" value="0.00" min="0" step="0.01">
+        </div>
+      </div>
+      <div class="form-actions">
+        <button type="button" id="cashoutConfirmBtn" class="submit-btn">Confirm Sale</button>
+        <button type="button" id="cashoutCancelBtn" class="export-btn">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+  // Uses Claude's window.storage when this runs inside claude.ai (e.g. previewed as
+  // an artifact). Falls back to the browser's own localStorage when opened as a
+  // standalone file (emailed, saved to Files, opened in Safari, etc.) so the
+  // dashboard keeps saving data either way.
+  const storageAdapter = {
+    async get(key, shared){
+      if(window.storage){
+        return await window.storage.get(key, shared);
+      }
+      const raw = localStorage.getItem('hogsden_' + key);
+      if(raw === null){ throw new Error('not found'); }
+      return { key: key, value: raw, shared: !!shared };
+    },
+    async set(key, value, shared){
+      if(window.storage){
+        return await window.storage.set(key, value, shared);
+      }
+      localStorage.setItem('hogsden_' + key, value);
+      return { key: key, value: value, shared: !!shared };
+    },
+    async delete(key, shared){
+      if(window.storage){
+        return await window.storage.delete(key, shared);
+      }
+      localStorage.removeItem('hogsden_' + key);
+      return { key: key, deleted: true, shared: !!shared };
+    }
+  };
+
+  // ================= PIN GATE =================
+  // A light deterrent only — everything here runs in the browser with no
+  // server behind it, so it will not stop anyone with real access to this
+  // file. It just keeps the dashboard off casual view.
+  async function hashPin(pin){
+    const data = new TextEncoder().encode('hogsden-pin:' + pin);
+    const digest = await crypto.subtle.digest('SHA-256', data);
+    return Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, '0')).join('');
+  }
+
+  const pinGate = document.getElementById('pinGate');
+  const pinSetupView = document.getElementById('pinSetupView');
+  const pinUnlockView = document.getElementById('pinUnlockView');
+
+  function unlockDashboard(){
+    pinGate.classList.add('unlocked');
+  }
+  function lockDashboard(){
+    pinGate.classList.remove('unlocked');
+  }
+
+  async function initPinGate(){
+    let existingHash = null;
+    try{
+      const result = await storageAdapter.get('pin-hash', false);
+      existingHash = result ? result.value : null;
+    } catch(err){
+      existingHash = null;
+    }
+    if(existingHash){
+      pinUnlockView.style.display = 'block';
+      pinSetupView.style.display = 'none';
+    } else {
+      pinSetupView.style.display = 'block';
+      pinUnlockView.style.display = 'none';
+    }
+  }
+  initPinGate();
+
+  const pinSetupBtn = document.getElementById('pinSetupBtn');
+  if(pinSetupBtn){
+    pinSetupBtn.addEventListener('click', async () => {
+      const pin = document.getElementById('pinSetupInput').value;
+      const confirmPin = document.getElementById('pinSetupConfirm').value;
+      const errorEl = document.getElementById('pinSetupError');
+      if(!/^\d{4,8}$/.test(pin)){
+        errorEl.textContent = 'PIN must be 4–8 digits.';
+        return;
+      }
+      if(pin !== confirmPin){
+        errorEl.textContent = 'PINs don\u2019t match.';
+        return;
+      }
+      const hash = await hashPin(pin);
+      try{
+        await storageAdapter.set('pin-hash', hash, false);
+      } catch(err){
+        errorEl.textContent = 'Could not save PIN — try again.';
+        return;
+      }
+      errorEl.textContent = '';
+      unlockDashboard();
+    });
+  }
+
+  const pinSkipBtn = document.getElementById('pinSkipBtn');
+  if(pinSkipBtn){
+    pinSkipBtn.addEventListener('click', () => {
+      unlockDashboard();
+    });
+  }
+
+  const pinUnlockBtn = document.getElementById('pinUnlockBtn');
+  async function attemptUnlock(){
+    const pin = document.getElementById('pinUnlockInput').value;
+    const errorEl = document.getElementById('pinUnlockError');
+    let existingHash = null;
+    try{
+      const result = await storageAdapter.get('pin-hash', false);
+      existingHash = result ? result.value : null;
+    } catch(err){
+      existingHash = null;
+    }
+    const enteredHash = await hashPin(pin);
+    if(existingHash && enteredHash === existingHash){
+      errorEl.textContent = '';
+      document.getElementById('pinUnlockInput').value = '';
+      unlockDashboard();
+    } else {
+      errorEl.textContent = 'Wrong PIN — try again.';
+    }
+  }
+  if(pinUnlockBtn){
+    pinUnlockBtn.addEventListener('click', attemptUnlock);
+  }
+  const pinUnlockInput = document.getElementById('pinUnlockInput');
+  if(pinUnlockInput){
+    pinUnlockInput.addEventListener('keydown', e => { if(e.key === 'Enter') attemptUnlock(); });
+  }
+
+  const pinForgotBtn = document.getElementById('pinForgotBtn');
+  if(pinForgotBtn){
+    pinForgotBtn.addEventListener('click', async () => {
+      if(!confirm('This clears the saved PIN so you can set a new one. Continue?')) return;
+      try{
+        await storageAdapter.delete('pin-hash', false);
+      } catch(err){
+        // nothing to clear, that's fine
+      }
+      document.getElementById('pinUnlockError').textContent = '';
+      pinUnlockView.style.display = 'none';
+      pinSetupView.style.display = 'block';
+    });
+  }
+
+  const lockNowBtn = document.getElementById('lockNowBtn');
+  if(lockNowBtn){
+    lockNowBtn.addEventListener('click', async () => {
+      let existingHash = null;
+      try{
+        const result = await storageAdapter.get('pin-hash', false);
+        existingHash = result ? result.value : null;
+      } catch(err){
+        existingHash = null;
+      }
+      if(existingHash){
+        pinUnlockView.style.display = 'block';
+        pinSetupView.style.display = 'none';
+      } else {
+        pinSetupView.style.display = 'block';
+        pinUnlockView.style.display = 'none';
+      }
+      lockDashboard();
+    });
+  }
+
+  const tags = document.querySelectorAll('.tag');
+  const panels = document.querySelectorAll('.panel');
+  function activate(target){
+    tags.forEach(t => t.classList.toggle('active', t.dataset.target === target));
+    panels.forEach(p => p.classList.toggle('active', p.id === target));
+  }
+  tags.forEach(tag => {
+    tag.addEventListener('click', () => activate(tag.dataset.target));
+    tag.addEventListener('keydown', e => { if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); activate(tag.dataset.target); } });
+  });
+
+  // ---- Cost & markup pricing calculator ----
+  function calcRow(row){
+    const cost = parseFloat(row.querySelector('.cost-input').value) || 0;
+    const markup = parseFloat(row.querySelector('.markup-input').value) || 0;
+    const listPrice = cost * (1 + markup / 100);
+    row.querySelector('.list-price').textContent = '$' + listPrice.toFixed(2);
+  }
+  document.querySelectorAll('#pricingBody tr').forEach(row => {
+    calcRow(row);
+    row.querySelector('.cost-input').addEventListener('input', () => calcRow(row));
+    row.querySelector('.markup-input').addEventListener('input', () => calcRow(row));
+  });
+  const applyBtn = document.getElementById('applyMarkupBtn');
+  if(applyBtn){
+    applyBtn.addEventListener('click', () => {
+      const val = document.getElementById('defaultMarkup').value;
+      document.querySelectorAll('#pricingBody .markup-input').forEach(input => {
+        input.value = val;
+        calcRow(input.closest('tr'));
+      });
+    });
+  }
+
+  // ---- Parts & category search (partial word match) ----
+  const searchInput = document.getElementById('partSearch');
+  const searchCount = document.getElementById('searchCount');
+  const bins = document.querySelectorAll('#catalogRoot .bin');
+
+  // remember which bins were open before searching, to restore on clear
+  const originallyOpen = new Set();
+  bins.forEach(bin => { if(bin.open) originallyOpen.add(bin); });
+
+  function highlight(el, query){
+    const raw = el.dataset.raw !== undefined ? el.dataset.raw : el.textContent;
+    el.dataset.raw = raw;
+    if(!query){
+      el.innerHTML = raw;
+      return;
+    }
+    const idx = raw.toLowerCase().indexOf(query);
+    if(idx === -1){ el.innerHTML = raw; return; }
+    el.innerHTML = raw.slice(0, idx) + '<mark>' + raw.slice(idx, idx + query.length) + '</mark>' + raw.slice(idx + query.length);
+  }
+
+  function runSearch(){
+    const query = searchInput.value.trim().toLowerCase();
+    let totalMatches = 0;
+
+    if(!query){
+      bins.forEach(bin => {
+        bin.classList.remove('no-match');
+        bin.open = originallyOpen.has(bin);
+        const summary = bin.querySelector('summary');
+        highlight(summary, '');
+        bin.querySelectorAll('li').forEach(li => {
+          li.classList.remove('no-match');
+          highlight(li, '');
+        });
+      });
+      searchCount.textContent = '';
+      return;
+    }
+
+    bins.forEach(bin => {
+      const summary = bin.querySelector('summary');
+      const categoryText = (summary.dataset.raw || summary.textContent).toLowerCase();
+      const categoryMatches = categoryText.includes(query);
+      let binHasMatch = categoryMatches;
+
+      bin.querySelectorAll('li').forEach(li => {
+        const raw = li.dataset.raw !== undefined ? li.dataset.raw : li.textContent;
+        const itemMatches = raw.toLowerCase().includes(query);
+        li.classList.toggle('no-match', !(itemMatches || categoryMatches));
+        highlight(li, itemMatches ? query : '');
+        if(itemMatches){ binHasMatch = true; totalMatches++; }
+      });
+
+      highlight(summary, categoryMatches ? query : '');
+      bin.classList.toggle('no-match', !binHasMatch);
+      bin.open = binHasMatch;
+      if(categoryMatches && !bin.querySelector('li:not(.no-match)')){
+        // whole category matched by name — count its items too
+        totalMatches += bin.querySelectorAll('li').length;
+      }
+    });
+
+    searchCount.textContent = totalMatches + (totalMatches === 1 ? ' match' : ' matches');
+  }
+
+  if(searchInput){ searchInput.addEventListener('input', runSearch); }
+
+  // ---- Shared state ----
+  const categoryLabels = {
+    engine: 'Engine Components',
+    drivetrain: 'Drivetrain Components',
+    electrical: 'Electrical Components',
+    frontend: 'Front-End Components',
+    touring: 'Touring Components',
+    chassis: 'Chassis Components',
+    fuelexhaust: 'Fuel & Exhaust Systems',
+    seats: 'Seats & Accessories',
+    specialty: 'Specialty Products'
+  };
+  let allCustomParts = [];
+  let allOrders = [];
+  let allExpenses = [];
+  let allDisputes = [];
+
+  function escapeHtml(str){
+    const div = document.createElement('div');
+    div.textContent = str || '';
+    return div.innerHTML;
+  }
+
+  // ================= ADD PART =================
+  const addPartForm = document.getElementById('addPartForm');
+  const pListPrice = document.getElementById('p-listprice');
+
+  function updateFormListPrice(){
+    const cost = parseFloat(document.getElementById('p-cost').value) || 0;
+    const markup = parseFloat(document.getElementById('p-markup').value) || 0;
+    pListPrice.textContent = '$' + (cost * (1 + markup / 100)).toFixed(2);
+  }
+  ['p-cost', 'p-markup'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.addEventListener('input', updateFormListPrice);
+  });
+  updateFormListPrice();
+
+  let pendingPhotos = [];
+  const photoInput = document.getElementById('p-photo');
+  const photoPreviewGrid = document.getElementById('p-photo-preview-grid');
+
+  function renderPhotoPreviewGrid(){
+    if(!photoPreviewGrid) return;
+    photoPreviewGrid.innerHTML = pendingPhotos.map((src, i) =>
+      '<div class="photo-thumb-wrap"><img src="' + src + '"><button type="button" class="photo-thumb-remove" data-idx="' + i + '">&times;</button></div>'
+    ).join('');
+    photoPreviewGrid.querySelectorAll('.photo-thumb-remove').forEach(btn => {
+      btn.addEventListener('click', () => {
+        pendingPhotos.splice(parseInt(btn.dataset.idx, 10), 1);
+        renderPhotoPreviewGrid();
+      });
+    });
+  }
+
+  if(photoInput){
+    photoInput.addEventListener('change', () => {
+      const files = Array.from(photoInput.files || []).slice(0, 6 - pendingPhotos.length);
+      let remaining = files.length;
+      if(remaining === 0) return;
+      files.forEach(file => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          pendingPhotos.push(reader.result);
+          remaining--;
+          if(remaining === 0){ renderPhotoPreviewGrid(); photoInput.value = ''; }
+        };
+        reader.readAsDataURL(file);
+      });
+    });
+  }
+
+  function addPartToDOM(part){
+    // 1. catalog bin
+    const bin = document.querySelector('#catalogRoot .bin[data-category="' + part.category + '"]');
+    if(bin){
+      const ul = bin.querySelector('ul');
+      const li = document.createElement('li');
+      li.textContent = part.name;
+      li.dataset.raw = part.name;
+      ul.appendChild(li);
+    }
+    // 2. Cost & Pricing table row
+    const pricingBody = document.getElementById('pricingBody');
+    if(pricingBody){
+      const tr = document.createElement('tr');
+      tr.innerHTML =
+        '<td data-label="Part">' + escapeHtml(part.name) + '</td>' +
+        '<td data-label="SKU">' + escapeHtml(part.sku || '—') + '</td>' +
+        '<td data-label="Qty">' + part.qty + '</td>' +
+        '<td data-label="Cost"><span class="dollar">$</span><input type="number" class="cost-input" value="' + part.cost.toFixed(2) + '" step="0.01"></td>' +
+        '<td data-label="Markup"><input type="number" class="markup-input" value="' + part.markup + '" step="1"><span class="pct">%</span></td>' +
+        '<td data-label="List Price" class="list-price">$0.00</td>' +
+        '<td data-label=""><button type="button" class="mini-btn cashout-btn">Cash Out</button></td>';
+      pricingBody.appendChild(tr);
+      calcRow(tr);
+      tr.querySelector('.cost-input').addEventListener('input', () => calcRow(tr));
+      tr.querySelector('.markup-input').addEventListener('input', () => calcRow(tr));
+      tr.querySelector('.cashout-btn').addEventListener('click', () => openCashoutFromPricingRow(tr));
+    }
+    // 3. Recently Added row (with thumbnail + photo count)
+    const recentBody = document.getElementById('recentAddedBody');
+    const emptyRow = document.getElementById('recentEmptyRow');
+    if(emptyRow) emptyRow.remove();
+    if(recentBody){
+      const tr2 = document.createElement('tr');
+      const listPrice = part.cost * (1 + part.markup / 100);
+      const photos = part.photos && part.photos.length ? part.photos : (part.photo ? [part.photo] : []);
+      const photoCell = photos.length
+        ? '<div style="position:relative; display:inline-block;"><img class="thumb" src="' + photos[0] + '">' + (photos.length > 1 ? '<span class="photo-count-badge">' + photos.length + '</span>' : '') + '</div>'
+        : '<div class="thumb-placeholder">—</div>';
+      tr2.innerHTML =
+        '<td data-label="Photo">' + photoCell + '</td>' +
+        '<td data-label="Part">' + escapeHtml(part.name) + '</td>' +
+        '<td data-label="Category">' + (categoryLabels[part.category] || part.category) + '</td>' +
+        '<td data-label="SKU">' + escapeHtml(part.sku || '—') + '</td>' +
+        '<td data-label="Qty">' + part.qty + '</td>' +
+        '<td data-label="Cost">$' + part.cost.toFixed(2) + '</td>' +
+        '<td data-label="Markup">' + part.markup + '%</td>' +
+        '<td data-label="List Price" class="list-price">$' + listPrice.toFixed(2) + '</td>' +
+        '<td data-label=""><button type="button" class="mini-btn cashout-btn" data-name="' + escapeHtml(part.name) + '" data-cost="' + part.cost.toFixed(2) + '" data-list="' + listPrice.toFixed(2) + '">Cash Out</button></td>';
+      recentBody.appendChild(tr2);
+      tr2.querySelector('.cashout-btn').addEventListener('click', () => {
+        openCashoutModal(part.name, part.cost, listPrice);
+      });
+    }
+    // 4. datalist for Orders tab
+    const datalist = document.getElementById('orderPartList');
+    if(datalist){
+      const opt = document.createElement('option');
+      opt.value = part.name;
+      datalist.appendChild(opt);
+    }
+  }
+
+  function renderLowStockAlerts(){
+    const box = document.getElementById('lowStockAlerts');
+    if(!box) return;
+    const low = allCustomParts.filter(p => p.qty <= (p.threshold !== undefined ? p.threshold : 5));
+    if(low.length === 0){
+      box.innerHTML = '<div class="alert-empty">No low-stock alerts yet — add parts with a threshold to start tracking.</div>';
+      return;
+    }
+    box.innerHTML = low.map(p =>
+      '<div class="alert-row"><span>' + escapeHtml(p.name) + ' <span style="color:var(--chrome); font-size:11px;">(' + (categoryLabels[p.category] || p.category) + ')</span></span>' +
+      '<span class="alert-qty">' + p.qty + ' on hand · reorder at ' + (p.threshold !== undefined ? p.threshold : 5) + '</span></div>'
+    ).join('');
+  }
+
+  function updateProfitStats(){
+    const invested = allCustomParts.reduce((sum, p) => sum + p.cost * p.qty, 0);
+    const potential = allCustomParts.reduce((sum, p) => sum + p.cost * (1 + p.markup / 100) * p.qty, 0);
+    const realized = allOrders.reduce((sum, o) => sum + o.saleprice, 0);
+    const profit = allOrders.reduce((sum, o) => sum + (o.saleprice - o.itemcost), 0);
+    const expensesTotal = allExpenses.reduce((sum, e) => sum + e.amount, 0);
+    const netProfit = profit - expensesTotal;
+    const statInvested = document.getElementById('statInvested');
+    const statPotential = document.getElementById('statPotential');
+    const statRealized = document.getElementById('statRealized');
+    const statProfit = document.getElementById('statProfit');
+    const statExpensesTotal = document.getElementById('statExpensesTotal');
+    const statNetProfit = document.getElementById('statNetProfit');
+    if(statInvested) statInvested.textContent = invested.toFixed(2);
+    if(statPotential) statPotential.textContent = potential.toFixed(2);
+    if(statRealized) statRealized.textContent = realized.toFixed(2);
+    if(statProfit) statProfit.textContent = profit.toFixed(2);
+    if(statExpensesTotal) statExpensesTotal.textContent = expensesTotal.toFixed(2);
+    if(statNetProfit) statNetProfit.textContent = netProfit.toFixed(2);
+    const marginSub = document.getElementById('marginSub');
+    if(marginSub){
+      const margin = realized > 0 ? (profit / realized * 100) : 0;
+      marginSub.textContent = 'Average realized margin: ' + (realized > 0 ? margin.toFixed(1) + '%' : '—');
+    }
+    updateWeeklyRecap();
+    renderCustomers();
+    renderLabelPicker();
+    renderTaxReport();
+  }
+
+  // ---- Tax report ----
+  function renderTaxReport(){
+    const body = document.getElementById('taxReportBody');
+    const statTaxTotal = document.getElementById('statTaxTotal');
+    const statTaxMonth = document.getElementById('statTaxMonth');
+    const statTaxOrderCount = document.getElementById('statTaxOrderCount');
+    if(!body) return;
+
+    const taxedOrders = allOrders.filter(o => (o.taxCollected || 0) > 0);
+    const totalTax = allOrders.reduce((sum, o) => sum + (o.taxCollected || 0), 0);
+
+    const now = new Date();
+    const thisMonthKey = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+    let monthTax = 0;
+
+    const monthMap = {};
+    allOrders.forEach(o => {
+      const tax = o.taxCollected || 0;
+      if(!o.date) return;
+      const d = new Date(o.date);
+      if(isNaN(d.getTime())) return;
+      const key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+      if(!monthMap[key]) monthMap[key] = { orders: 0, sales: 0, tax: 0 };
+      monthMap[key].orders += 1;
+      monthMap[key].sales += o.saleprice;
+      monthMap[key].tax += tax;
+      if(key === thisMonthKey) monthTax += tax;
+    });
+
+    if(statTaxTotal) statTaxTotal.textContent = totalTax.toFixed(2);
+    if(statTaxMonth) statTaxMonth.textContent = monthTax.toFixed(2);
+    if(statTaxOrderCount) statTaxOrderCount.textContent = taxedOrders.length;
+
+    const monthKeys = Object.keys(monthMap).sort().reverse();
+    if(monthKeys.length === 0){
+      body.innerHTML = '<tr id="taxReportEmptyRow"><td colspan="4" style="color:var(--chrome); font-style:italic;">No taxed orders logged yet.</td></tr>';
+      return;
+    }
+    body.innerHTML = monthKeys.map(key => {
+      const m = monthMap[key];
+      const label = new Date(key + '-02').toLocaleDateString(undefined, { year: 'numeric', month: 'long' });
+      return '<tr>' +
+        '<td data-label="Month">' + label + '</td>' +
+        '<td data-label="Orders">' + m.orders + '</td>' +
+        '<td data-label="Sales Total">$' + m.sales.toFixed(2) + '</td>' +
+        '<td data-label="Tax Collected" class="list-price">$' + m.tax.toFixed(2) + '</td>' +
+        '</tr>';
+    }).join('');
+  }
+
+  const exportTaxBtn = document.getElementById('exportTaxBtn');
+  if(exportTaxBtn){
+    exportTaxBtn.addEventListener('click', () => {
+      const rows = [['Date', 'Part', 'Customer', 'Sale Price', 'Tax Collected']];
+      allOrders.filter(o => (o.taxCollected || 0) > 0).forEach(o => {
+        rows.push([o.date, o.part, o.customer, o.saleprice.toFixed(2), (o.taxCollected || 0).toFixed(2)]);
+      });
+      downloadCSV('hogs-den-tax-report.csv', rows);
+    });
+  }
+
+  // ---- Weekly recap ----
+  function updateWeeklyRecap(){
+    const statPartsAdded = document.getElementById('statPartsAdded');
+    const statOrdersWeek = document.getElementById('statOrdersWeek');
+    const statRevenueWeek = document.getElementById('statRevenueWeek');
+    const statProfitWeek = document.getElementById('statProfitWeek');
+    const lowStockWeekSub = document.getElementById('lowStockWeekSub');
+    if(!statPartsAdded) return;
+
+    const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+
+    const partsThisWeek = allCustomParts.filter(p => p.createdAt && new Date(p.createdAt).getTime() >= weekAgo);
+
+    const ordersThisWeek = allOrders.filter(o => {
+      if(!o.date) return false;
+      const t = new Date(o.date).getTime();
+      return !isNaN(t) && t >= weekAgo;
+    });
+    const revenueWeek = ordersThisWeek.reduce((sum, o) => sum + o.saleprice, 0);
+    const profitWeek = ordersThisWeek.reduce((sum, o) => sum + (o.saleprice - o.itemcost), 0);
+    const lowStockCount = allCustomParts.filter(p => p.qty <= (p.threshold !== undefined ? p.threshold : 5)).length;
+
+    statPartsAdded.textContent = partsThisWeek.length;
+    statOrdersWeek.textContent = ordersThisWeek.length;
+    statRevenueWeek.textContent = revenueWeek.toFixed(2);
+    statProfitWeek.textContent = profitWeek.toFixed(2);
+    if(lowStockWeekSub) lowStockWeekSub.textContent = 'Low-stock items right now: ' + lowStockCount;
+  }
+
+  // ---- Customer list ----
+  function renderCustomers(){
+    const body = document.getElementById('customersBody');
+    if(!body) return;
+    if(allOrders.length === 0){
+      body.innerHTML = '<tr id="customersEmptyRow"><td colspan="5" style="color:var(--chrome); font-style:italic;">No customers yet — log an order to see them here.</td></tr>';
+      return;
+    }
+    const map = {};
+    allOrders.forEach(o => {
+      const key = (o.customer || 'Unknown').trim() || 'Unknown';
+      if(!map[key]){ map[key] = { orders: 0, spent: 0, lastDate: '', channels: {} }; }
+      map[key].orders += 1;
+      map[key].spent += o.saleprice;
+      if(o.date && (!map[key].lastDate || o.date > map[key].lastDate)) map[key].lastDate = o.date;
+      map[key].channels[o.channel] = (map[key].channels[o.channel] || 0) + 1;
+    });
+    const rows = Object.keys(map).sort((a, b) => map[b].spent - map[a].spent).map(name => {
+      const c = map[name];
+      const topChannel = Object.keys(c.channels).sort((a, b) => c.channels[b] - c.channels[a])[0] || '—';
+      return '<tr>' +
+        '<td data-label="Customer">' + escapeHtml(name) + '</td>' +
+        '<td data-label="Orders">' + c.orders + '</td>' +
+        '<td data-label="Total Spent" class="list-price">$' + c.spent.toFixed(2) + '</td>' +
+        '<td data-label="Last Order">' + escapeHtml(c.lastDate || '—') + '</td>' +
+        '<td data-label="Usual Channel">' + escapeHtml(topChannel) + '</td>' +
+        '</tr>';
+    });
+    body.innerHTML = rows.join('');
+
+    const customerList = document.getElementById('customerList');
+    if(customerList){
+      const names = Object.keys(map).sort((a, b) => a.localeCompare(b));
+      customerList.innerHTML = names.map(n => '<option value="' + escapeHtml(n) + '">').join('');
+    }
+  }
+
+  async function loadSavedParts(){
+    try{
+      const result = await storageAdapter.get('custom-parts', false);
+      if(result && result.value){
+        allCustomParts = JSON.parse(result.value);
+        allCustomParts.forEach(addPartToDOM);
+      }
+    } catch(err){
+      allCustomParts = [];
+    }
+    renderLowStockAlerts();
+    updateProfitStats();
+  }
+
+  if(addPartForm){
+    addPartForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const part = {
+        category: document.getElementById('p-category').value,
+        name: document.getElementById('p-name').value.trim(),
+        sku: document.getElementById('p-sku').value.trim(),
+        qty: parseInt(document.getElementById('p-qty').value, 10) || 0,
+        bin: document.getElementById('p-bin').value.trim(),
+        cost: parseFloat(document.getElementById('p-cost').value) || 0,
+        markup: parseFloat(document.getElementById('p-markup').value) || 0,
+        threshold: parseInt(document.getElementById('p-threshold').value, 10) || 0,
+        model: document.getElementById('p-model').value.trim(),
+        yearFrom: parseInt(document.getElementById('p-yearfrom').value, 10) || null,
+        yearTo: parseInt(document.getElementById('p-yearto').value, 10) || null,
+        source: document.getElementById('p-source').value,
+        acqDate: document.getElementById('p-acqdate').value,
+        compression: document.getElementById('p-compression').value,
+        inspection: document.getElementById('p-inspection').value.trim(),
+        compPriceNotes: document.getElementById('p-compprice').value.trim(),
+        photos: pendingPhotos.slice(),
+        notes: document.getElementById('p-notes').value.trim(),
+        createdAt: new Date().toISOString()
+      };
+      if(!part.name) return;
+
+      allCustomParts.push(part);
+      addPartToDOM(part);
+      renderLowStockAlerts();
+      updateProfitStats();
+
+      try {
+        await storageAdapter.set('custom-parts', JSON.stringify(allCustomParts), false);
+      } catch(err) {
+        console.error('Could not save part', err);
+      }
+
+      const confirmMsg = document.getElementById('addPartConfirm');
+      confirmMsg.textContent = '✓ Added "' + part.name + '" to the catalog';
+      confirmMsg.classList.add('show');
+      setTimeout(() => confirmMsg.classList.remove('show'), 3000);
+
+      addPartForm.reset();
+      document.getElementById('p-markup').value = 65;
+      document.getElementById('p-qty').value = 1;
+      document.getElementById('p-threshold').value = 5;
+      pendingPhotos = [];
+      renderPhotoPreviewGrid();
+      document.getElementById('listingDescBox').style.display = 'none';
+      updateFormListPrice();
+    });
+  }
+
+  // ================= LISTING DESCRIPTION GENERATOR =================
+  const generateDescBtn = document.getElementById('generateDescBtn');
+  const listingDescBox = document.getElementById('listingDescBox');
+  const listingDescOutput = document.getElementById('listingDescOutput');
+  const compressionLabels = { na: '', pass: 'Compression tested — passed.', fail: 'Compression tested — failed (sold for parts/rebuild).', untested: 'Not yet compression tested.' };
+
+  if(generateDescBtn){
+    generateDescBtn.addEventListener('click', () => {
+      const name = document.getElementById('p-name').value.trim();
+      if(!name){
+        alert('Enter a part name first.');
+        return;
+      }
+      const category = categoryLabels[document.getElementById('p-category').value] || '';
+      const model = document.getElementById('p-model').value.trim();
+      const yearFrom = document.getElementById('p-yearfrom').value.trim();
+      const yearTo = document.getElementById('p-yearto').value.trim();
+      const inspection = document.getElementById('p-inspection').value.trim();
+      const compression = compressionLabels[document.getElementById('p-compression').value] || '';
+      const notes = document.getElementById('p-notes').value.trim();
+      const cost = parseFloat(document.getElementById('p-cost').value) || 0;
+      const markup = parseFloat(document.getElementById('p-markup').value) || 0;
+      const listPrice = cost * (1 + markup / 100);
+
+      let fitLine = '';
+      if(model && yearFrom && yearTo) fitLine = 'Fits ' + model + ', ' + yearFrom + '–' + yearTo + '.';
+      else if(model) fitLine = 'Fits ' + model + '.';
+      else if(yearFrom && yearTo) fitLine = 'Fits ' + yearFrom + '–' + yearTo + ' models.';
+
+      const lines = [];
+      lines.push(name.toUpperCase() + (category ? ' — Genuine Used Harley-Davidson ' + category.replace(' Components', '').replace(' Systems', '').replace(' Products', '') + ' Part' : ''));
+      lines.push('');
+      if(fitLine) lines.push(fitLine + ' Please confirm compatibility with your exact year/model before purchasing — message us with questions.');
+      lines.push('');
+      lines.push('CONDITION: ' + (inspection || 'Used, functional condition. See photos for cosmetic details.'));
+      if(compression) lines.push(compression);
+      lines.push('');
+      if(notes) { lines.push(notes); lines.push(''); }
+      lines.push('Pulled and inspected in-house at Hog\'s Den Parts. High-resolution photos show the actual item you\'ll receive. Professionally packaged and shipped fast.');
+      lines.push('');
+      lines.push('Price: $' + listPrice.toFixed(2));
+      lines.push('');
+      lines.push('ALL SALES FINAL — sold as-is, where-is. Questions on fitment before you buy? Just ask.');
+
+      listingDescOutput.value = lines.join('\n');
+      listingDescBox.style.display = 'block';
+      listingDescBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    });
+  }
+
+  const copyDescBtn = document.getElementById('copyDescBtn');
+  if(copyDescBtn){
+    copyDescBtn.addEventListener('click', async () => {
+      const confirmSpan = document.getElementById('copyDescConfirm');
+      try{
+        await navigator.clipboard.writeText(listingDescOutput.value);
+        confirmSpan.textContent = '✓ Copied';
+      } catch(err){
+        listingDescOutput.select();
+        document.execCommand('copy');
+        confirmSpan.textContent = '✓ Copied';
+      }
+      confirmSpan.classList.add('show');
+      setTimeout(() => confirmSpan.classList.remove('show'), 2500);
+    });
+  }
+
+  // ================= FITMENT LOOKUP =================
+  const fitSearchBtn = document.getElementById('fitSearchBtn');
+  const fitClearBtn = document.getElementById('fitClearBtn');
+  const fitmentResults = document.getElementById('fitmentResults');
+
+  function runFitmentSearch(){
+    const model = document.getElementById('fitModel').value.trim().toLowerCase();
+    const yearVal = document.getElementById('fitYear').value;
+    const year = yearVal ? parseInt(yearVal, 10) : null;
+
+    if(!model && !year){
+      fitmentResults.innerHTML = '';
+      return;
+    }
+
+    const matches = allCustomParts.filter(p => {
+      const modelMatch = !model || (p.model && p.model.toLowerCase().includes(model));
+      let yearMatch = true;
+      if(year){
+        if(p.yearFrom && p.yearTo){ yearMatch = year >= p.yearFrom && year <= p.yearTo; }
+        else if(p.yearFrom){ yearMatch = year >= p.yearFrom; }
+        else if(p.yearTo){ yearMatch = year <= p.yearTo; }
+        else { yearMatch = false; }
+      }
+      return modelMatch && yearMatch && (p.model || p.yearFrom || p.yearTo);
+    });
+
+    if(matches.length === 0){
+      fitmentResults.innerHTML = '<div class="fitment-none">No parts with matching fitment info yet. Add year/model when logging a part in the Add Part tab.</div>';
+      return;
+    }
+
+    fitmentResults.innerHTML = matches.map(p => {
+      const yearRange = (p.yearFrom || p.yearTo) ? ((p.yearFrom || '—') + '–' + (p.yearTo || '—')) : '—';
+      return '<div class="fitment-result"><div class="fr-name">' + escapeHtml(p.name) + '</div>' +
+        '<div class="fr-meta">Fits: ' + escapeHtml(p.model || '—') + ' · Years: ' + yearRange + ' · Qty: ' + p.qty + '</div></div>';
+    }).join('');
+  }
+
+  if(fitSearchBtn) fitSearchBtn.addEventListener('click', runFitmentSearch);
+  if(fitClearBtn) fitClearBtn.addEventListener('click', () => {
+    document.getElementById('fitModel').value = '';
+    document.getElementById('fitYear').value = '';
+    fitmentResults.innerHTML = '';
+  });
+
+  // ================= ORDERS =================
+  const orderForm = document.getElementById('orderForm');
+  const oPartInput = document.getElementById('o-part');
+  const oItemCost = document.getElementById('o-itemcost');
+
+  if(oPartInput){
+    oPartInput.addEventListener('input', () => {
+      const match = allCustomParts.find(p => p.name.toLowerCase() === oPartInput.value.trim().toLowerCase());
+      if(match) oItemCost.value = match.cost.toFixed(2);
+    });
+  }
+
+  function addOrderToDOM(order){
+    const ordersBody = document.getElementById('ordersBody');
+    const emptyRow = document.getElementById('ordersEmptyRow');
+    if(emptyRow) emptyRow.remove();
+    if(!ordersBody) return;
+    const profit = order.saleprice - order.itemcost;
+    const tax = order.taxCollected || 0;
+    const tr = document.createElement('tr');
+    tr.innerHTML =
+      '<td data-label="Date">' + escapeHtml(order.date || '—') + '</td>' +
+      '<td data-label="Part">' + escapeHtml(order.part) + '</td>' +
+      '<td data-label="Customer">' + escapeHtml(order.customer || '—') + '</td>' +
+      '<td data-label="Channel">' + escapeHtml(order.channel) + '</td>' +
+      '<td data-label="Sale Price">$' + order.saleprice.toFixed(2) + '</td>' +
+      '<td data-label="Tax">$' + tax.toFixed(2) + '</td>' +
+      '<td data-label="Profit" class="list-price">$' + profit.toFixed(2) + '</td>' +
+      '<td data-label="Status"><span class="status ' + (order.status === 'Delivered' ? 'ready' : order.status === 'Shipped' ? 'progress' : order.status === 'Packed' ? 'diag' : 'wait') + '">' + escapeHtml(order.status) + '</span></td>' +
+      '<td data-label="Tracking">' + escapeHtml(order.tracking || '—') + '</td>';
+    ordersBody.appendChild(tr);
+  }
+
+  async function loadSavedOrders(){
+    try{
+      const result = await storageAdapter.get('orders-log', false);
+      if(result && result.value){
+        allOrders = JSON.parse(result.value);
+        allOrders.forEach(addOrderToDOM);
+      }
+    } catch(err){
+      allOrders = [];
+    }
+    updateProfitStats();
+    renderTaxReport();
+  }
+
+  if(orderForm){
+    orderForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const order = {
+        part: document.getElementById('o-part').value.trim(),
+        customer: document.getElementById('o-customer').value.trim(),
+        channel: document.getElementById('o-channel').value,
+        saleprice: parseFloat(document.getElementById('o-saleprice').value) || 0,
+        itemcost: parseFloat(document.getElementById('o-itemcost').value) || 0,
+        taxCollected: parseFloat(document.getElementById('o-tax').value) || 0,
+        status: document.getElementById('o-status').value,
+        tracking: document.getElementById('o-tracking').value.trim(),
+        date: document.getElementById('o-date').value
+      };
+      if(!order.part) return;
+
+      allOrders.push(order);
+      addOrderToDOM(order);
+      updateProfitStats();
+      renderTaxReport();
+
+      try {
+        await storageAdapter.set('orders-log', JSON.stringify(allOrders), false);
+      } catch(err) {
+        console.error('Could not save order', err);
+      }
+
+      const confirmMsg = document.getElementById('orderConfirm');
+      confirmMsg.textContent = '✓ Logged order for "' + order.part + '"';
+      confirmMsg.classList.add('show');
+      setTimeout(() => confirmMsg.classList.remove('show'), 3000);
+
+      orderForm.reset();
+    });
+  }
+
+  // ================= CSV EXPORT =================
+  function downloadCSV(filename, rows){
+    const csv = rows.map(row => row.map(cell => {
+      const val = (cell === null || cell === undefined) ? '' : String(cell);
+      return '"' + val.replace(/"/g, '""') + '"';
+    }).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  const exportInventoryBtn = document.getElementById('exportInventoryBtn');
+  if(exportInventoryBtn){
+    exportInventoryBtn.addEventListener('click', () => {
+      const rows = [['Part', 'Category', 'SKU', 'Qty', 'Bin', 'Cost', 'Markup %', 'List Price', 'Model', 'Year From', 'Year To', 'Source', 'Compression Test']];
+      allCustomParts.forEach(p => rows.push([
+        p.name, categoryLabels[p.category] || p.category, p.sku, p.qty, p.bin,
+        p.cost.toFixed(2), p.markup, (p.cost * (1 + p.markup / 100)).toFixed(2),
+        p.model, p.yearFrom || '', p.yearTo || '', p.source, p.compression
+      ]));
+      downloadCSV('hogs-den-inventory.csv', rows);
+    });
+  }
+
+  const exportOrdersBtn = document.getElementById('exportOrdersBtn');
+  if(exportOrdersBtn){
+    exportOrdersBtn.addEventListener('click', () => {
+      const rows = [['Date', 'Part', 'Customer', 'Channel', 'Sale Price', 'Item Cost', 'Tax Collected', 'Profit', 'Status', 'Tracking']];
+      allOrders.forEach(o => rows.push([
+        o.date, o.part, o.customer, o.channel, o.saleprice.toFixed(2), o.itemcost.toFixed(2),
+        (o.taxCollected || 0).toFixed(2), (o.saleprice - o.itemcost).toFixed(2), o.status, o.tracking
+      ]));
+      downloadCSV('hogs-den-orders.csv', rows);
+    });
+  }
+
+  loadSavedParts();
+  loadSavedOrders();
+
+  // ---- Startup checklist ----
+  const checklistBoxes = document.querySelectorAll('#checklistRoot input[type="checkbox"]');
+  const checklistFill = document.getElementById('checklistFill');
+  const checklistPct = document.getElementById('checklistPct');
+
+  function updateChecklistProgress(){
+    const total = checklistBoxes.length;
+    const done = document.querySelectorAll('#checklistRoot input[type="checkbox"]:checked').length;
+    const pct = total ? Math.round((done / total) * 100) : 0;
+    checklistFill.style.width = pct + '%';
+    checklistPct.textContent = pct + '% complete (' + done + '/' + total + ')';
+  }
+
+  async function saveChecklistState(){
+    const state = {};
+    checklistBoxes.forEach(box => { state[box.dataset.key] = box.checked; });
+    try{
+      await storageAdapter.set('startup-checklist', JSON.stringify(state), false);
+    } catch(err){
+      console.error('Could not save checklist', err);
+    }
+  }
+
+  async function loadChecklistState(){
+    try{
+      const result = await storageAdapter.get('startup-checklist', false);
+      if(result && result.value){
+        const state = JSON.parse(result.value);
+        checklistBoxes.forEach(box => {
+          if(state[box.dataset.key]) box.checked = true;
+        });
+      }
+    } catch(err){
+      // nothing saved yet
+    }
+    updateChecklistProgress();
+  }
+
+  checklistBoxes.forEach(box => {
+    box.addEventListener('change', () => {
+      updateChecklistProgress();
+      saveChecklistState();
+    });
+  });
+
+  loadChecklistState();
+
+  // ================= BULK CSV IMPORT =================
+  const BULK_HEADERS = ['category','name','sku','qty','bin','cost','markup','threshold','model','yearFrom','yearTo','source','acqDate','compression','inspection','notes'];
+
+  function parseCSV(text){
+    const lines = text.replace(/\r/g, '').split('\n').filter(l => l.trim().length > 0);
+    if(lines.length < 2) return [];
+    function splitLine(line){
+      const cells = [];
+      let cur = '', inQuotes = false;
+      for(let i = 0; i < line.length; i++){
+        const ch = line[i];
+        if(inQuotes){
+          if(ch === '"' && line[i+1] === '"'){ cur += '"'; i++; }
+          else if(ch === '"'){ inQuotes = false; }
+          else { cur += ch; }
+        } else {
+          if(ch === '"'){ inQuotes = true; }
+          else if(ch === ','){ cells.push(cur); cur = ''; }
+          else { cur += ch; }
+        }
+      }
+      cells.push(cur);
+      return cells;
+    }
+    const headers = splitLine(lines[0]).map(h => h.trim());
+    const rows = [];
+    for(let i = 1; i < lines.length; i++){
+      const cells = splitLine(lines[i]);
+      const obj = {};
+      headers.forEach((h, idx) => { obj[h] = (cells[idx] !== undefined ? cells[idx].trim() : ''); });
+      rows.push(obj);
+    }
+    return rows;
+  }
+
+  const bulkTemplateBtn = document.getElementById('bulkTemplateBtn');
+  if(bulkTemplateBtn){
+    bulkTemplateBtn.addEventListener('click', () => {
+      downloadCSV('hogs-den-bulk-import-template.csv', [
+        BULK_HEADERS,
+        ['engine','Complete Engine — Twin Cam 103','ENG-1001','1','A1','950.00','65','1','Softail','2013','2017','Parted Bike','2026-07-01','Passed','Runs strong, no leaks','']
+      ]);
+    });
+  }
+
+  const bulkCsvInput = document.getElementById('bulkCsvInput');
+  const bulkFileName = document.getElementById('bulkFileName');
+  const bulkImportResult = document.getElementById('bulkImportResult');
+  if(bulkCsvInput){
+    bulkCsvInput.addEventListener('change', () => {
+      const file = bulkCsvInput.files && bulkCsvInput.files[0];
+      if(!file) return;
+      bulkFileName.textContent = file.name;
+      const reader = new FileReader();
+      reader.onload = async () => {
+        let rows;
+        try{
+          rows = parseCSV(reader.result);
+        } catch(err){
+          bulkImportResult.textContent = 'Could not read that file — make sure it\'s a plain CSV.';
+          return;
+        }
+        if(rows.length === 0){
+          bulkImportResult.textContent = 'No rows found. Use "Download Template" for the expected format.';
+          return;
+        }
+        let imported = 0;
+        rows.forEach(r => {
+          const name = (r.name || '').trim();
+          if(!name) return;
+          const part = {
+            category: (r.category || 'specialty').trim() || 'specialty',
+            name: name,
+            sku: (r.sku || '').trim(),
+            qty: parseInt(r.qty, 10) || 0,
+            bin: (r.bin || '').trim(),
+            cost: parseFloat(r.cost) || 0,
+            markup: parseFloat(r.markup) || 65,
+            threshold: parseInt(r.threshold, 10) || 5,
+            model: (r.model || '').trim(),
+            yearFrom: parseInt(r.yearFrom, 10) || null,
+            yearTo: parseInt(r.yearTo, 10) || null,
+            source: (r.source || '').trim(),
+            acqDate: (r.acqDate || '').trim(),
+            compression: (r.compression || '').trim(),
+            inspection: (r.inspection || '').trim(),
+            photos: [],
+            notes: (r.notes || '').trim(),
+            createdAt: new Date().toISOString()
+          };
+          allCustomParts.push(part);
+          addPartToDOM(part);
+          imported++;
+        });
+
+        if(imported > 0){
+          try{
+            await storageAdapter.set('custom-parts', JSON.stringify(allCustomParts), false);
+          } catch(err){
+            console.error('Could not save imported parts', err);
+          }
+          renderLowStockAlerts();
+          updateProfitStats();
+        }
+        bulkImportResult.textContent = '✓ Imported ' + imported + ' of ' + rows.length + ' rows.';
+        bulkCsvInput.value = '';
+        bulkFileName.textContent = 'No file chosen';
+      };
+      reader.readAsText(file);
+    });
+  }
+
+  // ================= BACKUP & RESTORE =================
+  const exportBackupBtn = document.getElementById('exportBackupBtn');
+  if(exportBackupBtn){
+    exportBackupBtn.addEventListener('click', async () => {
+      const backup = { exportedAt: new Date().toISOString(), source: 'Hogs Den Dashboard' };
+      try{ const r = await storageAdapter.get('custom-parts', false); backup.customParts = r ? JSON.parse(r.value) : []; } catch(err){ backup.customParts = []; }
+      try{ const r = await storageAdapter.get('orders-log', false); backup.ordersLog = r ? JSON.parse(r.value) : []; } catch(err){ backup.ordersLog = []; }
+      try{ const r = await storageAdapter.get('startup-checklist', false); backup.startupChecklist = r ? JSON.parse(r.value) : {}; } catch(err){ backup.startupChecklist = {}; }
+      try{ const r = await storageAdapter.get('expenses-log', false); backup.expensesLog = r ? JSON.parse(r.value) : []; } catch(err){ backup.expensesLog = []; }
+      try{ const r = await storageAdapter.get('disputes-log', false); backup.disputesLog = r ? JSON.parse(r.value) : []; } catch(err){ backup.disputesLog = []; }
+
+      const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'hogs-den-backup-' + new Date().toISOString().slice(0,10) + '.json';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      const backupResult = document.getElementById('backupResult');
+      if(backupResult) backupResult.textContent = '✓ Backup downloaded — ' + backup.customParts.length + ' parts, ' + backup.ordersLog.length + ' orders.';
+    });
+  }
+
+  const restoreBackupInput = document.getElementById('restoreBackupInput');
+  if(restoreBackupInput){
+    restoreBackupInput.addEventListener('change', () => {
+      const file = restoreBackupInput.files && restoreBackupInput.files[0];
+      if(!file) return;
+      const reader = new FileReader();
+      reader.onload = async () => {
+        const backupResult = document.getElementById('backupResult');
+        let data;
+        try{
+          data = JSON.parse(reader.result);
+        } catch(err){
+          if(backupResult) backupResult.textContent = 'That file doesn\'t look like a valid backup.';
+          return;
+        }
+        try{
+          if(data.customParts) await storageAdapter.set('custom-parts', JSON.stringify(data.customParts), false);
+          if(data.ordersLog) await storageAdapter.set('orders-log', JSON.stringify(data.ordersLog), false);
+          if(data.startupChecklist) await storageAdapter.set('startup-checklist', JSON.stringify(data.startupChecklist), false);
+          if(data.expensesLog) await storageAdapter.set('expenses-log', JSON.stringify(data.expensesLog), false);
+          if(data.disputesLog) await storageAdapter.set('disputes-log', JSON.stringify(data.disputesLog), false);
+          if(backupResult) backupResult.textContent = '✓ Restored. Reloading…';
+          setTimeout(() => window.location.reload(), 1200);
+        } catch(err){
+          if(backupResult) backupResult.textContent = 'Restore failed — please try again.';
+        }
+      };
+      reader.readAsText(file);
+    });
+  }
+
+  // ================= SHOP EXPENSES =================
+  function addExpenseToDOM(exp){
+    const body = document.getElementById('expensesBody');
+    const emptyRow = document.getElementById('expensesEmptyRow');
+    if(emptyRow) emptyRow.remove();
+    if(!body) return;
+    const tr = document.createElement('tr');
+    tr.innerHTML =
+      '<td data-label="Date">' + escapeHtml(exp.date || '—') + '</td>' +
+      '<td data-label="Category">' + escapeHtml(exp.category) + '</td>' +
+      '<td data-label="Amount">$' + exp.amount.toFixed(2) + '</td>' +
+      '<td data-label="Notes">' + escapeHtml(exp.notes || '—') + '</td>';
+    body.appendChild(tr);
+  }
+
+  function updateExpensesTotal(){
+    const total = allExpenses.reduce((sum, e) => sum + e.amount, 0);
+    const el = document.getElementById('expensesRunningTotal');
+    if(el) el.textContent = '$' + total.toFixed(2);
+  }
+
+  async function loadSavedExpenses(){
+    try{
+      const result = await storageAdapter.get('expenses-log', false);
+      if(result && result.value){
+        allExpenses = JSON.parse(result.value);
+        allExpenses.forEach(addExpenseToDOM);
+      }
+    } catch(err){ allExpenses = []; }
+    updateExpensesTotal();
+    updateProfitStats();
+  }
+
+  const expenseForm = document.getElementById('expenseForm');
+  if(expenseForm){
+    expenseForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const exp = {
+        category: document.getElementById('e-category').value,
+        amount: parseFloat(document.getElementById('e-amount').value) || 0,
+        date: document.getElementById('e-date').value,
+        notes: document.getElementById('e-notes').value.trim()
+      };
+      allExpenses.push(exp);
+      addExpenseToDOM(exp);
+      updateExpensesTotal();
+      updateProfitStats();
+      try{ await storageAdapter.set('expenses-log', JSON.stringify(allExpenses), false); } catch(err){ console.error(err); }
+
+      const confirmMsg = document.getElementById('expenseConfirm');
+      confirmMsg.textContent = '✓ Logged';
+      confirmMsg.classList.add('show');
+      setTimeout(() => confirmMsg.classList.remove('show'), 2500);
+
+      expenseForm.reset();
+    });
+  }
+
+  const exportExpensesBtn = document.getElementById('exportExpensesBtn');
+  if(exportExpensesBtn){
+    exportExpensesBtn.addEventListener('click', () => {
+      const rows = [['Date', 'Category', 'Amount', 'Notes']];
+      allExpenses.forEach(e => rows.push([e.date, e.category, e.amount.toFixed(2), e.notes]));
+      downloadCSV('hogs-den-expenses.csv', rows);
+    });
+  }
+
+  // ================= RETURNS & DISPUTES =================
+  function addDisputeToDOM(d){
+    const body = document.getElementById('disputesBody');
+    const emptyRow = document.getElementById('disputesEmptyRow');
+    if(emptyRow) emptyRow.remove();
+    if(!body) return;
+    const statusClass = d.status.indexOf('Resolved') === 0 ? 'ready' : d.status === 'Under Review' ? 'progress' : 'wait';
+    const tr = document.createElement('tr');
+    tr.innerHTML =
+      '<td data-label="Date">' + escapeHtml(d.date || '—') + '</td>' +
+      '<td data-label="Part/Order">' + escapeHtml(d.part) + '</td>' +
+      '<td data-label="Customer">' + escapeHtml(d.customer || '—') + '</td>' +
+      '<td data-label="Reason">' + escapeHtml(d.reason || '—') + '</td>' +
+      '<td data-label="Status"><span class="status ' + statusClass + '">' + escapeHtml(d.status) + '</span></td>' +
+      '<td data-label="Refund">$' + d.refund.toFixed(2) + '</td>';
+    body.appendChild(tr);
+  }
+
+  async function loadSavedDisputes(){
+    try{
+      const result = await storageAdapter.get('disputes-log', false);
+      if(result && result.value){
+        allDisputes = JSON.parse(result.value);
+        allDisputes.forEach(addDisputeToDOM);
+      }
+    } catch(err){ allDisputes = []; }
+  }
+
+  const disputeForm = document.getElementById('disputeForm');
+  if(disputeForm){
+    disputeForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const d = {
+        part: document.getElementById('d-part').value.trim(),
+        customer: document.getElementById('d-customer').value.trim(),
+        date: document.getElementById('d-date').value,
+        reason: document.getElementById('d-reason').value.trim(),
+        status: document.getElementById('d-status').value,
+        refund: parseFloat(document.getElementById('d-refund').value) || 0,
+        resolution: document.getElementById('d-resolution').value.trim()
+      };
+      if(!d.part) return;
+      allDisputes.push(d);
+      addDisputeToDOM(d);
+      try{ await storageAdapter.set('disputes-log', JSON.stringify(allDisputes), false); } catch(err){ console.error(err); }
+
+      const confirmMsg = document.getElementById('disputeConfirm');
+      confirmMsg.textContent = '✓ Logged';
+      confirmMsg.classList.add('show');
+      setTimeout(() => confirmMsg.classList.remove('show'), 2500);
+
+      disputeForm.reset();
+    });
+  }
+
+  // ================= BIN LABELS (QR) =================
+  function renderLabelPicker(){
+    const list = document.getElementById('labelPickerList');
+    if(!list) return;
+    if(allCustomParts.length === 0){
+      list.innerHTML = '<div class="alert-empty">Add parts from the Add Part tab to generate labels for them.</div>';
+      return;
+    }
+    const checked = new Set(Array.from(list.querySelectorAll('input:checked')).map(cb => cb.dataset.idx));
+    list.innerHTML = allCustomParts.map((p, i) =>
+      '<label class="label-picker-row"><input type="checkbox" data-idx="' + i + '"' + (checked.has(String(i)) ? ' checked' : '') + '>' +
+      '<span>' + escapeHtml(p.name) + '</span>' +
+      '<span class="lp-sku">' + escapeHtml(p.sku || 'no SKU') + (p.bin ? ' · Bin ' + escapeHtml(p.bin) : '') + '</span></label>'
+    ).join('');
+  }
+
+  const selectAllLabelsBtn = document.getElementById('selectAllLabelsBtn');
+  if(selectAllLabelsBtn){
+    selectAllLabelsBtn.addEventListener('click', () => {
+      document.querySelectorAll('#labelPickerList input[type="checkbox"]').forEach(cb => { cb.checked = true; });
+    });
+  }
+
+  const printLabelsBtn = document.getElementById('printLabelsBtn');
+  if(printLabelsBtn){
+    printLabelsBtn.addEventListener('click', () => {
+      const idxs = Array.from(document.querySelectorAll('#labelPickerList input:checked')).map(cb => parseInt(cb.dataset.idx, 10));
+      if(idxs.length === 0){
+        alert('Check at least one part to print labels for.');
+        return;
+      }
+      const sheet = document.getElementById('printLabelSheet');
+      sheet.innerHTML = idxs.map(i => {
+        const p = allCustomParts[i];
+        const qrData = encodeURIComponent((p.sku || p.name) + ' | ' + p.name + (p.bin ? ' | Bin ' + p.bin : ''));
+        const qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=' + qrData;
+        return '<div class="print-label"><img src="' + qrUrl + '" alt="QR"><div class="pl-info"><div class="pl-name">' + escapeHtml(p.name) + '</div>' +
+          'SKU: ' + escapeHtml(p.sku || '—') + '<br>Bin: ' + escapeHtml(p.bin || '—') + '<br>Hog\'s Den Parts</div></div>';
+      }).join('');
+      setTimeout(() => window.print(), 200);
+    });
+  }
+
+  loadSavedExpenses();
+  loadSavedDisputes();
+
+  // ================= CASH OUT MODAL =================
+  const cashoutModal = document.getElementById('cashoutModal');
+  let cashoutContext = null;
+
+  function openCashoutModal(name, cost, listPrice){
+    cashoutContext = { name: name, cost: cost };
+    document.getElementById('cashoutPartName').textContent = name;
+    document.getElementById('co-saleprice').value = listPrice.toFixed(2);
+    document.getElementById('co-tax').value = '0.00';
+    document.getElementById('co-customer').value = '';
+    document.getElementById('co-channel').value = 'eBay Motors';
+    cashoutModal.classList.add('open');
+  }
+
+  function openCashoutFromPricingRow(tr){
+    const nameCell = tr.querySelector('[data-label="Part"]');
+    const costInput = tr.querySelector('.cost-input');
+    const markupInput = tr.querySelector('.markup-input');
+    if(!nameCell || !costInput || !markupInput) return;
+    const name = nameCell.textContent.trim();
+    const cost = parseFloat(costInput.value) || 0;
+    const markup = parseFloat(markupInput.value) || 0;
+    const listPrice = cost * (1 + markup / 100);
+    openCashoutModal(name, cost, listPrice);
+  }
+
+  function injectStaticCashoutButtons(){
+    document.querySelectorAll('#pricingBody tr').forEach(tr => {
+      if(tr.querySelector('.cashout-btn')) return;
+      const td = document.createElement('td');
+      td.setAttribute('data-label', '');
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'mini-btn cashout-btn';
+      btn.textContent = 'Cash Out';
+      btn.addEventListener('click', () => openCashoutFromPricingRow(tr));
+      td.appendChild(btn);
+      tr.appendChild(td);
+    });
+  }
+  injectStaticCashoutButtons();
+
+  const cashoutCancelBtn = document.getElementById('cashoutCancelBtn');
+  if(cashoutCancelBtn){
+    cashoutCancelBtn.addEventListener('click', () => {
+      cashoutModal.classList.remove('open');
+      cashoutContext = null;
+    });
+  }
+
+  const cashoutConfirmBtn = document.getElementById('cashoutConfirmBtn');
+  if(cashoutConfirmBtn){
+    cashoutConfirmBtn.addEventListener('click', async () => {
+      if(!cashoutContext) return;
+      const order = {
+        part: cashoutContext.name,
+        customer: document.getElementById('co-customer').value.trim(),
+        channel: document.getElementById('co-channel').value,
+        saleprice: parseFloat(document.getElementById('co-saleprice').value) || 0,
+        itemcost: cashoutContext.cost,
+        taxCollected: parseFloat(document.getElementById('co-tax').value) || 0,
+        status: 'Sold',
+        tracking: '',
+        date: new Date().toISOString().slice(0, 10)
+      };
+      allOrders.push(order);
+      addOrderToDOM(order);
+      updateProfitStats();
+
+      try{
+        await storageAdapter.set('orders-log', JSON.stringify(allOrders), false);
+      } catch(err){
+        console.error('Could not save order', err);
+      }
+
+      cashoutModal.classList.remove('open');
+      cashoutContext = null;
+      activate('orders');
+    });
+  }
+</script>
+</body>
+</html>
